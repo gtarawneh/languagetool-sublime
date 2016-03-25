@@ -8,7 +8,7 @@ import urllib2
 problems = []
 
 # index of currently selected problem
-selProblem = 0;
+selProblem = 0
 
 # select characters with indeces [i, j]
 def moveCaret(self, i, j):
@@ -16,11 +16,23 @@ def moveCaret(self, i, j):
 	self.view.sel().clear()
 	self.view.sel().add(sublime.Region(target, target+j-i))
 
+# returns key of region i
+def getProbKey(i):
+	return "p" + str(i)
+
+def clearRegions(self):
+	v = self.view;
+	for i in range(0, len(problems)-1):
+		v.clear_region(getProbKey(i))
+
 # select problem i, assumes len(problems)>0
 def selectProblem(self, i):
+	v = self.view
 	if len(problems) > 0:
-		c = problems[i];
-		moveCaret(self, c[0], c[1]);
+		c = problems[i]
+		regions = v.get_regions(getProbKey(i))
+		r = regions[0]
+		moveCaret(self, r.a, r.b)
 		sublime.status_message(c[3] + " (" + c[4] + ")")
 
 # navigation function
@@ -30,9 +42,9 @@ class gotoNextProblemCommand(sublime_plugin.TextCommand):
 		global selProblem
 
 		if len(problems) > 0:
-			jumpSize = int(jumpSizeStr);
+			jumpSize = int(jumpSizeStr)
 			selProblem = (selProblem + jumpSize) % len(problems)
-			selectProblem(self, selProblem);
+			selectProblem(self, selProblem)
 		else:
 			sublime.status_message("run language check first")
 
@@ -40,25 +52,28 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
 		global selProblem
-		problems = [];
-		v = self.view;
-		str1 = v.substr(sublime.Region(0, v.size()));
-		urlargs = urllib.urlencode({'language' : 'en-US', 'text': str1});
-		s = "http://localhost:8081/?" + urlargs;
+		problems = []
+		v = self.view
+		clearRegions(self)
+		strText = v.substr(sublime.Region(0, v.size()))
+		urlargs = urllib.urlencode({'language' : 'en-US', 'text': strText})
+		s = "http://localhost:8081/?" + urlargs
 		content = urllib2.urlopen(s).read()
 		print(content)
 		root = xml.etree.ElementTree.fromstring(content)
+		ind = 0;
 		for child in root:
 			if child.tag == "error":
-				x1 = int(child.attrib["fromx"])
-				x2 = int(child.attrib["tox"])
+				a = int(child.attrib["fromx"])
+				b = int(child.attrib["tox"])
 				category = child.attrib["category"]
 				msg = child.attrib["msg"]
 				replacements = child.attrib["replacements"]
-				v.add_regions("problem" + str(x1), [sublime.Region(x1, x2)], "comment", "", sublime.DRAW_OUTLINED);
-				problems.append((x1,x2, category, msg, replacements));
-		if len(problems)>0:
-			selProblem = 0;
-			selectProblem(self, selProblem);
+				v.add_regions(getProbKey(ind), [sublime.Region(a, b)], "comment", "", 0 * sublime.DRAW_OUTLINED)
+				problems.append((a, b, category, msg, replacements))
+				ind += 1;
+		if ind>0:
+			selProblem = 0
+			selectProblem(self, selProblem)
 		else:
-			sublime.status_message("No errors found :-)");
+			sublime.status_message("No errors found :-)")
