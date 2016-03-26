@@ -62,16 +62,34 @@ class gotoNextProblemCommand(sublime_plugin.TextCommand):
 			if jumpSize>0:
 				for ind in probInds: # forward search
 					p = problems[ind]
-					if (not problemSolved(self, p)) and (p[0] > caretPos):
+					r = self.view.get_regions(p[5])[0];
+					if (not problemSolved(self, p)) and (r.a > caretPos):
 						selectProblem(self, p)
 						return
 			else:
 				for ind in reversed(probInds): # backward search
 					p = problems[ind]
-					if (not problemSolved(self, p)) and (p[0] < caretPos):
+					r = self.view.get_regions(p[5])[0];
+					if (not problemSolved(self, p)) and (r.a < caretPos):
 						selectProblem(self, p)
 						return
 		msg("no language problems to fix")
+
+class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
+	def run(self, edit, applyFix):
+		global problems
+		sel = self.view.sel()[0]
+		for p in problems:
+			r = self.view.get_regions(p[5])[0]
+			if (r.a, r.b) == (sel.begin(), sel.end()):
+				self.view.erase_regions(p[5]) # remove outline
+				moveCaret(self, r.b, r.b) # move caret to end of region
+				if (applyFix == "True") and (len(p[4])>0):
+					self.view.replace(edit, r, p[4]) # apply correction
+				problems.remove(p)
+				self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
+				return
+		print('no language problem selected')
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

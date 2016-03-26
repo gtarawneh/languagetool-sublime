@@ -1,0 +1,7 @@
+[
+	{ "keys": ["ctrl+shift+r"], "command": "language_tool" },
+	{ "keys": ["alt+down"], "command": "goto_next_problem", "args": {"jumpSizeStr": "1"}  },	
+	{ "keys": ["alt+up"], "command": "goto_next_problem", "args": {"jumpSizeStr": "-1"}  },	
+	{ "keys": ["alt+right"], "command": "mark_language_problem_solved", "args": {"applyFix": "True"} },
+	{ "keys": ["alt+left"], "command": "mark_language_problem_solved", "args": {"applyFix": "False"} }
+]
