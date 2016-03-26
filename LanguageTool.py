@@ -25,10 +25,12 @@ def getProbKey(i):
 def msg(str):
 	sublime.status_message(str)
 
-def clearRegions(self):
-	v = self.view;
+def clearProblems(self):
+	global problems
+	v = self.view
 	for i in range(0, len(problems)):
-		v.clear_region(getProbKey(i))
+		v.erase_regions(getProbKey(i))
+	problems = []
 
 def selectProblem(self, p):
 	v = self.view
@@ -94,9 +96,8 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
-		problems = []
+		clearProblems(self)
 		v = self.view
-		clearRegions(self)
 		strText = v.substr(sublime.Region(0, v.size()))
 		if containsUnicode(strText):
 			msg('text contains unicode, unable to pass to LanguageTool')
@@ -111,11 +112,11 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 					a = int(child.attrib["fromx"])
 					b = int(child.attrib["tox"])
 					category = child.attrib["category"]
-					msg = child.attrib["msg"]
+					message = child.attrib["msg"]
 					replacements = child.attrib["replacements"]
 					regionKey = getProbKey(ind)
 					v.add_regions(regionKey, [sublime.Region(a, b)], "string", "", sublime.DRAW_OUTLINED)
-					problems.append((a, b, category, msg, replacements, regionKey))
+					problems.append((a, b, category, message, replacements, regionKey))
 					ind += 1
 			if ind>0:
 				selectProblem(self, problems[0])
