@@ -75,7 +75,7 @@ class gotoNextProblemCommand(sublime_plugin.TextCommand):
 					if (not problemSolved(self, p)) and (r.a < caretPos):
 						selectProblem(self, p)
 						return
-		msg("no language problems to fix")
+		msg("no further language problems to fix")
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
@@ -105,12 +105,17 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			urlargs = urllib.urlencode({'language' : 'en-US', 'text': strText})
 			s = "http://localhost:8081/?" + urlargs
 			content = urllib.urlopen(s).read()
+			print(content)
 			root = xml.etree.ElementTree.fromstring(content)
 			ind = 0;
 			for child in root:
 				if child.tag == "error":
-					a = int(child.attrib["fromx"])
-					b = int(child.attrib["tox"])
+					ax = int(child.attrib["fromx"])
+					ay = int(child.attrib["fromy"])
+					bx = int(child.attrib["tox"])
+					by = int(child.attrib["toy"])
+					a = v.text_point(ay, ax);
+					b = v.text_point(by, bx);
 					category = child.attrib["category"]
 					message = child.attrib["msg"]
 					replacements = child.attrib["replacements"]
