@@ -98,12 +98,12 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 			nextCaretPos = r.b;
 			if (r.a, r.b) == (sel.begin(), sel.end()):
 				if applyFix and (len(p[4])>0):
-					if '#' in p[4]:
+					if '#' in p[4]: # multiple suggestions
 						suggestions = p[4].split('#')
 						f1 = lambda i : onSuggestionListSelect(self, edit, p, suggestions, i)
 						self.view.window().show_quick_panel(suggestions, f1)
 						return
-					else:
+					else: # single suggestion
 						self.view.replace(edit, r, p[4]) # apply correction
 						nextCaretPos = r.a + len(p[4])
 				self.view.erase_regions(p[5]) # remove outline

@@ -1,7 +1,7 @@
 [
 	{ "keys": ["ctrl+shift+r"], "command": "language_tool" },
-	{ "keys": ["alt+down"], "command": "goto_next_language_problem", "args": {"jumpForward": true}  },	
-	{ "keys": ["alt+up"], "command": "goto_next_language_problem", "args": {"jumpForward": false}  },	
-	{ "keys": ["alt+right"], "command": "mark_language_problem_solved", "args": {"applyFix": true} },
-	{ "keys": ["alt+left"], "command": "mark_language_problem_solved", "args": {"applyFix": false} }
+	{ "keys": ["alt+down"], 	"command": "goto_next_language_problem", 	"args": {"jumpForward": true}  	},
+	{ "keys": ["alt+up"], 		"command": "goto_next_language_problem", 	"args": {"jumpForward": false}  },
+	{ "keys": ["alt+right"], 	"command": "mark_language_problem_solved", 	"args": {"applyFix": 	true} 	},
+	{ "keys": ["alt+left"], 	"command": "mark_language_problem_solved", 	"args": {"applyFix": 	false} 	}
 ]
