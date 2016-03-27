@@ -104,26 +104,30 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		else:
 			urlargs = urllib.urlencode({'language' : 'en-US', 'text': strText})
 			s = "http://localhost:8081/?" + urlargs
-			content = urllib.urlopen(s).read()
-			print(content)
-			root = xml.etree.ElementTree.fromstring(content)
-			ind = 0;
-			for child in root:
-				if child.tag == "error":
-					ax = int(child.attrib["fromx"])
-					ay = int(child.attrib["fromy"])
-					bx = int(child.attrib["tox"])
-					by = int(child.attrib["toy"])
-					a = v.text_point(ay, ax);
-					b = v.text_point(by, bx);
-					category = child.attrib["category"]
-					message = child.attrib["msg"]
-					replacements = child.attrib["replacements"]
-					regionKey = getProbKey(ind)
-					v.add_regions(regionKey, [sublime.Region(a, b)], "string", "", sublime.DRAW_OUTLINED)
-					problems.append((a, b, category, message, replacements, regionKey))
-					ind += 1
-			if ind>0:
-				selectProblem(self, problems[0])
-			else:
-				msg("no language problems were found :-)")
+			try:
+				content = urllib.urlopen(s).read()
+			except IOError:
+				msg('error, unable to connect via http, is LanguageTool running?')
+			else:				
+				print(content)
+				root = xml.etree.ElementTree.fromstring(content)
+				ind = 0;
+				for child in root:
+					if child.tag == "error":
+						ax = int(child.attrib["fromx"])
+						ay = int(child.attrib["fromy"])
+						bx = int(child.attrib["tox"])
+						by = int(child.attrib["toy"])
+						a = v.text_point(ay, ax);
+						b = v.text_point(by, bx);
+						category = child.attrib["category"]
+						message = child.attrib["msg"]
+						replacements = child.attrib["replacements"]
+						regionKey = getProbKey(ind)
+						v.add_regions(regionKey, [sublime.Region(a, b)], "string", "", sublime.DRAW_OUTLINED)
+						problems.append((a, b, category, message, replacements, regionKey))
+						ind += 1
+				if ind>0:
+					selectProblem(self, problems[0])
+				else:
+					msg("no language problems were found :-)")
