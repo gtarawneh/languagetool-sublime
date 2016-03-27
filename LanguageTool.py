@@ -37,7 +37,7 @@ def selectProblem(self, p):
 	r = v.get_regions(p[5])[0]
 	moveCaret(self, r.a, r.b)
 	if len(p[4])>0:
-		msg(p[3] + " (" + p[4] + ")")
+		msg("{0} ({1})".format(p[3], p[4]))
 	else:
 		msg(p[3])			
 
@@ -54,7 +54,7 @@ def problemSolved(self, p):
 	return (r.a == r.b)
 
 # navigation function
-class gotoNextProblemCommand(sublime_plugin.TextCommand):
+class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 	def run(self, edit, jumpSizeStr):
 		global problems
 		if len(problems) > 0:
@@ -77,6 +77,16 @@ class gotoNextProblemCommand(sublime_plugin.TextCommand):
 						return
 		msg("no further language problems to fix")
 
+def onSuggestionListSelect(self, edit, p, suggestions, choice):
+	global problems
+	if choice != -1:
+		r = self.view.get_regions(p[5])[0]
+		self.view.replace(edit, r, suggestions[choice])
+		problems.remove(p)
+		self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
+	else:
+		selectProblem(self, p)
+
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
 		global problems
@@ -84,10 +94,16 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		for p in problems:
 			r = self.view.get_regions(p[5])[0]
 			if (r.a, r.b) == (sel.begin(), sel.end()):
+				if (applyFix == "True") and (len(p[4])>0):
+					if '#' in p[4]:
+						suggestions = p[4].split('#')
+						f1 = lambda i : onSuggestionListSelect(self, edit, p, suggestions, i)
+						self.view.window().show_quick_panel(suggestions, f1)
+						return
+					else:
+						self.view.replace(edit, r, p[4]) # apply correction
 				self.view.erase_regions(p[5]) # remove outline
 				moveCaret(self, r.b, r.b) # move caret to end of region
-				if (applyFix == "True") and (len(p[4])>0):
-					self.view.replace(edit, r, p[4]) # apply correction
 				problems.remove(p)
 				self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
 				return
@@ -109,7 +125,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			except IOError:
 				msg('error, unable to connect via http, is LanguageTool running?')
 			else:				
-				print(content)
 				root = xml.etree.ElementTree.fromstring(content)
 				ind = 0;
 				for child in root:
