@@ -86,7 +86,7 @@ def onSuggestionListSelect(self, edit, p, suggestions, choice):
 		c = r.a + len(suggestions[choice])
 		moveCaret(self, c, c) # move caret to end of region
 		problems.remove(p)
-		self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
+		self.view.run_command("goto_next_language_problem", {"jumpSizeStr": "+1"})
 	else:
 		selectProblem(self, p)
 
@@ -96,6 +96,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		sel = self.view.sel()[0]
 		for p in problems:
 			r = self.view.get_regions(p[5])[0]
+			nextCaretPos = r.b;
 			if (r.a, r.b) == (sel.begin(), sel.end()):
 				if (applyFix == "True") and (len(p[4])>0):
 					if '#' in p[4]:
@@ -105,11 +106,11 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 						return
 					else:
 						self.view.replace(edit, r, p[4]) # apply correction
+						nextCaretPos = r.a + len(p[4])
 				self.view.erase_regions(p[5]) # remove outline
-				c = r.a + len(p[4]);
-				moveCaret(self, c, c) # move caret to end of region
+				moveCaret(self, nextCaretPos, nextCaretPos) # move caret to end of region
 				problems.remove(p)
-				self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
+				self.view.run_command("goto_next_language_problem", {"jumpSizeStr": "+1"})
 				return
 		print('no language problem selected')
 
