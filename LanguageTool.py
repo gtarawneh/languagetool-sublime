@@ -82,6 +82,8 @@ def onSuggestionListSelect(self, edit, p, suggestions, choice):
 	if choice != -1:
 		r = self.view.get_regions(p[5])[0]
 		self.view.replace(edit, r, suggestions[choice])
+		c = r.a + len(suggestions[choice])
+		moveCaret(self, c, c) # move caret to end of region
 		problems.remove(p)
 		self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
 	else:
@@ -103,7 +105,8 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 					else:
 						self.view.replace(edit, r, p[4]) # apply correction
 				self.view.erase_regions(p[5]) # remove outline
-				moveCaret(self, r.b, r.b) # move caret to end of region
+				c = r.a + len(p[4]);
+				moveCaret(self, c, c) # move caret to end of region
 				problems.remove(p)
 				self.view.run_command("goto_next_problem", {"jumpSizeStr": "+1"})
 				return
@@ -118,10 +121,10 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		if containsUnicode(strText):
 			msg('text contains unicode, unable to pass to LanguageTool')
 		else:
-			urlargs = urllib.urlencode({'language' : 'en-US', 'text': strText})
-			s = "http://localhost:8081/?" + urlargs
+			data = urllib.urlencode({'language' : 'en-US', 'text': strText})
+			url = "http://localhost:8081/"
 			try:
-				content = urllib.urlopen(s).read()
+				content = urllib.urlopen(url, data).read()
 			except IOError:
 				msg('error, unable to connect via http, is LanguageTool running?')
 			else:				
