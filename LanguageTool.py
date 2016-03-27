@@ -36,6 +36,7 @@ def selectProblem(self, p):
 	v = self.view
 	r = v.get_regions(p[5])[0]
 	moveCaret(self, r.a, r.b)
+	v.show_at_center(r)
 	if len(p[4])>0:
 		msg("{0} ({1})".format(p[3], p[4]))
 	else:
