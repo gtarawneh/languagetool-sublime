@@ -1,6 +1,6 @@
 # LanguageTool.py
 #
-# This is a simple Sublime Text plugin for checking grammar. it passes buffer
+# This is a simple Sublime Text plugin for checking grammar. It passes buffer
 # content to LanguageTool (via http) and highlights reported problems.
 
 import sublime, sublime_plugin
@@ -56,13 +56,12 @@ def problemSolved(self, p):
 
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
-	def run(self, edit, jumpSizeStr):
+	def run(self, edit, jumpForward):
 		global problems
 		if len(problems) > 0:
-			jumpSize = int(jumpSizeStr)
 			caretPos = self.view.sel()[0].begin()
 			probInds = range(0, len(problems))
-			if jumpSize>0:
+			if jumpForward:
 				for ind in probInds: # forward search
 					p = problems[ind]
 					r = self.view.get_regions(p[5])[0];
@@ -86,7 +85,7 @@ def onSuggestionListSelect(self, edit, p, suggestions, choice):
 		c = r.a + len(suggestions[choice])
 		moveCaret(self, c, c) # move caret to end of region
 		problems.remove(p)
-		self.view.run_command("goto_next_language_problem", {"jumpSizeStr": "+1"})
+		self.view.run_command("goto_next_language_problem", {"jumpForward": True})
 	else:
 		selectProblem(self, p)
 
@@ -98,7 +97,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 			r = self.view.get_regions(p[5])[0]
 			nextCaretPos = r.b;
 			if (r.a, r.b) == (sel.begin(), sel.end()):
-				if (applyFix == "True") and (len(p[4])>0):
+				if applyFix and (len(p[4])>0):
 					if '#' in p[4]:
 						suggestions = p[4].split('#')
 						f1 = lambda i : onSuggestionListSelect(self, edit, p, suggestions, i)
@@ -110,23 +109,24 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 				self.view.erase_regions(p[5]) # remove outline
 				moveCaret(self, nextCaretPos, nextCaretPos) # move caret to end of region
 				problems.remove(p)
-				self.view.run_command("goto_next_language_problem", {"jumpSizeStr": "+1"})
+				self.view.run_command("goto_next_language_problem", {"jumpForward": True})
 				return
-		print('no language problem selected')
+		msg('no language problem selected')
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
 		clearProblems(self)
+		settings = sublime.load_settings("languagetool.sublime-settings")
+		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		v = self.view
 		strText = v.substr(sublime.Region(0, v.size()))
 		if containsUnicode(strText):
 			msg('text contains unicode, unable to pass to LanguageTool')
 		else:
 			data = urllib.urlencode({'language' : 'en-US', 'text': strText})
-			url = "http://localhost:8081/"
 			try:
-				content = urllib.urlopen(url, data).read()
+				content = urllib.urlopen(server, data).read()
 			except IOError:
 				msg('error, unable to connect via http, is LanguageTool running?')
 			else:				
@@ -143,9 +143,11 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 						category = child.attrib["category"]
 						message = child.attrib["msg"]
 						replacements = child.attrib["replacements"]
+						region = sublime.Region(a, b)
 						regionKey = getProbKey(ind)
-						v.add_regions(regionKey, [sublime.Region(a, b)], "string", "", sublime.DRAW_OUTLINED)
-						problems.append((a, b, category, message, replacements, regionKey))
+						v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
+						p = (a, b, category, message, replacements, regionKey)
+						problems.append(p)
 						ind += 1
 				if ind>0:
 					selectProblem(self, problems[0])

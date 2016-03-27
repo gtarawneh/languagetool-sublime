@@ -1,0 +1,4 @@
+{
+    "languagetool_server": "https://languagetool.org:8081/" // limited to 20 calls per minute
+    // "languagetool_server": "http://localhost:8081/" // local server
+}

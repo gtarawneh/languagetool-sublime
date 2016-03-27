@@ -1,6 +1,0 @@
-[
-	{
-		"caption": "Check language using LanguageTool",
-		"command": "language_tool"
-	}
-]

@@ -1,0 +1,26 @@
+[
+	{
+		"caption": "LanguageTool: Check Text",
+		"command": "language_tool"
+	},
+	{
+		"caption": "LanguageTool: Next Problem",
+		"command": "goto_next_language_problem",
+		"args": {"jumpForward": true}
+	},
+	{
+		"caption": "LanguageTool: Previous Problem",
+		"command": "goto_next_language_problem",
+		"args": {"jumpForward": false}
+	},
+	{
+		"caption": "LanguageTool: Apply Suggested Correction(s)",
+		"command": "mark_language_problem_solved",
+		"args": {"applyFix": true}
+	},
+	{
+		"caption": "LanguageTool: Ignore Problem",
+		"command": "mark_language_problem_solved",
+		"args": {"applyFix": false}
+	}	
+]
