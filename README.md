@@ -23,7 +23,7 @@ All plugin commands and their keyboard shortcuts can be listed in the command pa
 
 #### Configuration
 
-The adapter sends the text to be checked to a LanguageTool server via http. The server is initially configured (in the file `languagetool.sublime-settings`) as `https://languagetool.org:8081/`. This is just to get the adapter up and running after installation and should not be kept for continuous use. Please download LanguageTool then run and configure the adapter to use [your own LanguageTool server](http://wiki.languagetool.org/http-server).
+The adapter sends the text to be checked to a LanguageTool server via http. The server is initially configured (in the file `LanguageTool.sublime-settings`) as `https://languagetool.org:8081/`. This is just to get the adapter up and running after installation and should not be kept for continuous use. Please download LanguageTool then run and configure the adapter to use [your own LanguageTool server](http://wiki.languagetool.org/http-server).
 
 #### Issues
 
@@ -35,4 +35,4 @@ The adapter is fully functional but has few nags which I'll try to address in th
 
 #### Contributing
 
-Feel free to fork and improve. I tried to keep things neat and tidy but I've never coded in python and have little experience with sublime so please forgive any coding idiosyncrasies. 
+Feel free to fork and improve. I tried to keep things neat and tidy but I've never coded in python and have little experience with sublime so please forgive any coding idiosyncrasies.

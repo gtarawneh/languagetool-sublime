@@ -40,12 +40,12 @@ def selectProblem(self, p):
 	if len(p[4])>0:
 		msg("{0} ({1})".format(p[3], p[4]))
 	else:
-		msg(p[3])			
+		msg(p[3])
 
 # check if string contains any unicode chars
 def containsUnicode(str):
 	try:
-		str.decode('ascii') 
+		str.decode('ascii')
 		return False
 	except UnicodeEncodeError:
 		return True
@@ -113,7 +113,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 					else: # single suggestion
 						v.replace(edit, r, p[4]) # apply correction
 						nextCaretPos = r.a + len(p[4])
-				else:						
+				else:
 					v.insert(edit, v.size(), "") # dummy edit to enable undoing ignore
 					dummyR = sublime.Region(r.a, r.a)
 					v.add_regions(p[5], [dummyR], "string", "", sublime.DRAW_OUTLINED)
@@ -138,7 +138,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				content = urllib.urlopen(server, data).read()
 			except IOError:
 				msg('error, unable to connect via http, is LanguageTool running?')
-			else:				
+			else:
 				root = xml.etree.ElementTree.fromstring(content)
 				ind = 0;
 				for child in root:
