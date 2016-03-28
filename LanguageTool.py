@@ -8,7 +8,7 @@ import xml.etree.ElementTree
 import urllib
 
 # problems is an array of n-tuples in the form
-# (x0, x1, msg, description, suggestions, regionID)
+# (x0, x1, msg, description, suggestions, regionID, orgContent)
 problems = []
 
 # select characters with indices [i, j]
@@ -50,9 +50,16 @@ def containsUnicode(str):
 	except UnicodeEncodeError:
 		return True
 
-def problemSolved(self, p):
-	r = self.view.get_regions(p[5])[0]
-	return (r.a == r.b)
+def problemSolved(v, p):
+	rl = v.get_regions(p[5])
+	if len(rl) == 0:
+		print('tried to find non-existing region with key ' + p[5])
+		return True
+	r = rl[0]
+	# a problem is solved when either:
+	# 1. its region has zero length
+	# 2. its contents have been changed
+	return r.empty() or (v.substr(r) != p[6])
 
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
@@ -65,14 +72,14 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 				for ind in probInds: # forward search
 					p = problems[ind]
 					r = self.view.get_regions(p[5])[0];
-					if (not problemSolved(self, p)) and (r.a > caretPos):
+					if (not problemSolved(self.view, p)) and (r.a > caretPos):
 						selectProblem(self, p)
 						return
 			else:
 				for ind in reversed(probInds): # backward search
 					p = problems[ind]
 					r = self.view.get_regions(p[5])[0];
-					if (not problemSolved(self, p)) and (r.a < caretPos):
+					if (not problemSolved(self.view, p)) and (r.a < caretPos):
 						selectProblem(self, p)
 						return
 		msg("no further language problems to fix")
@@ -84,7 +91,6 @@ def onSuggestionListSelect(self, edit, p, suggestions, choice):
 		self.view.replace(edit, r, suggestions[choice])
 		c = r.a + len(suggestions[choice])
 		moveCaret(self, c, c) # move caret to end of region
-		problems.remove(p)
 		self.view.run_command("goto_next_language_problem", {"jumpForward": True})
 	else:
 		selectProblem(self, p)
@@ -92,24 +98,27 @@ def onSuggestionListSelect(self, edit, p, suggestions, choice):
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
 		global problems
-		sel = self.view.sel()[0]
+		v = self.view
+		sel = v.sel()[0]
 		for p in problems:
-			r = self.view.get_regions(p[5])[0]
+			r = v.get_regions(p[5])[0]
 			nextCaretPos = r.b;
 			if (r.a, r.b) == (sel.begin(), sel.end()):
 				if applyFix and (len(p[4])>0):
 					if '#' in p[4]: # multiple suggestions
 						suggestions = p[4].split('#')
 						f1 = lambda i : onSuggestionListSelect(self, edit, p, suggestions, i)
-						self.view.window().show_quick_panel(suggestions, f1)
+						v.window().show_quick_panel(suggestions, f1)
 						return
 					else: # single suggestion
-						self.view.replace(edit, r, p[4]) # apply correction
+						v.replace(edit, r, p[4]) # apply correction
 						nextCaretPos = r.a + len(p[4])
-				self.view.erase_regions(p[5]) # remove outline
+				else:						
+					v.insert(edit, v.size(), "") # dummy edit to enable undoing ignore
+					dummyR = sublime.Region(r.a, r.a)
+					v.add_regions(p[5], [dummyR], "string", "", sublime.DRAW_OUTLINED)
 				moveCaret(self, nextCaretPos, nextCaretPos) # move caret to end of region
-				problems.remove(p)
-				self.view.run_command("goto_next_language_problem", {"jumpForward": True})
+				v.run_command("goto_next_language_problem", {"jumpForward": True})
 				return
 		msg('no language problem selected')
 
@@ -146,10 +155,20 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 						region = sublime.Region(a, b)
 						regionKey = getProbKey(ind)
 						v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
-						p = (a, b, category, message, replacements, regionKey)
+						orgContent = v.substr(region)
+						p = (a, b, category, message, replacements, regionKey, orgContent)
 						problems.append(p)
 						ind += 1
 				if ind>0:
 					selectProblem(self, problems[0])
 				else:
 					msg("no language problems were found :-)")
+
+class LanguageToolListener(sublime_plugin.EventListener):
+	def on_modified(self, view):
+		# buffer text was changed, recompute region highlights
+		for p in problems:
+			rL = view.get_regions(p[5])
+			if len(rL) > 0:
+				regionScope = "" if problemSolved(view, p) else "string"
+				view.add_regions(p[5], rL, regionScope, "",  sublime.DRAW_OUTLINED)
