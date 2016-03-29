@@ -42,14 +42,6 @@ def selectProblem(self, p):
 	else:
 		msg(p[3])
 
-# check if string contains any unicode chars
-def containsUnicode(str):
-	try:
-		str.decode('ascii')
-		return False
-	except UnicodeEncodeError:
-		return True
-
 def problemSolved(v, p):
 	rl = v.get_regions(p[5])
 	if len(rl) == 0:
@@ -130,39 +122,36 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		v = self.view
 		strText = v.substr(sublime.Region(0, v.size()))
-		if containsUnicode(strText):
-			msg('text contains unicode, unable to pass to LanguageTool')
+		data = urllib.urlencode({'language' : 'en-US', 'text': strText.encode('utf8')})
+		try:
+			content = urllib.urlopen(server, data).read()
+		except IOError:
+			msg('error, unable to connect via http, is LanguageTool running?')
 		else:
-			data = urllib.urlencode({'language' : 'en-US', 'text': strText})
-			try:
-				content = urllib.urlopen(server, data).read()
-			except IOError:
-				msg('error, unable to connect via http, is LanguageTool running?')
+			root = xml.etree.ElementTree.fromstring(content)
+			ind = 0;
+			for child in root:
+				if child.tag == "error":
+					ax = int(child.attrib["fromx"])
+					ay = int(child.attrib["fromy"])
+					bx = int(child.attrib["tox"])
+					by = int(child.attrib["toy"])
+					a = v.text_point(ay, ax);
+					b = v.text_point(by, bx);
+					category = child.attrib["category"]
+					message = child.attrib["msg"]
+					replacements = child.attrib["replacements"]
+					region = sublime.Region(a, b)
+					regionKey = getProbKey(ind)
+					v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
+					orgContent = v.substr(region)
+					p = (a, b, category, message, replacements, regionKey, orgContent)
+					problems.append(p)
+					ind += 1
+			if ind>0:
+				selectProblem(self, problems[0])
 			else:
-				root = xml.etree.ElementTree.fromstring(content)
-				ind = 0;
-				for child in root:
-					if child.tag == "error":
-						ax = int(child.attrib["fromx"])
-						ay = int(child.attrib["fromy"])
-						bx = int(child.attrib["tox"])
-						by = int(child.attrib["toy"])
-						a = v.text_point(ay, ax);
-						b = v.text_point(by, bx);
-						category = child.attrib["category"]
-						message = child.attrib["msg"]
-						replacements = child.attrib["replacements"]
-						region = sublime.Region(a, b)
-						regionKey = getProbKey(ind)
-						v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
-						orgContent = v.substr(region)
-						p = (a, b, category, message, replacements, regionKey, orgContent)
-						problems.append(p)
-						ind += 1
-				if ind>0:
-					selectProblem(self, problems[0])
-				else:
-					msg("no language problems were found :-)")
+				msg("no language problems were found :-)")
 
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
