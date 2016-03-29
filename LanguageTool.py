@@ -12,10 +12,10 @@ import urllib
 problems = []
 
 # select characters with indices [i, j]
-def moveCaret(self, i, j):
-	target = self.view.text_point(0, i)
-	self.view.sel().clear()
-	self.view.sel().add(sublime.Region(target, target+j-i))
+def moveCaret(view, i, j):
+	target = view.text_point(0, i)
+	view.sel().clear()
+	view.sel().add(sublime.Region(target, target+j-i))
 
 # returns key of region i
 def getProbKey(i):
@@ -25,22 +25,21 @@ def getProbKey(i):
 def msg(str):
 	sublime.status_message(str)
 
-def clearProblems(self):
+def clearProblems(v):
 	global problems
-	v = self.view
 	for i in range(0, len(problems)):
 		v.erase_regions(getProbKey(i))
 	problems = []
 
-def selectProblem(self, p):
-	v = self.view
+def selectProblem(v, p):
 	r = v.get_regions(p[5])[0]
-	moveCaret(self, r.a, r.b)
+	moveCaret(v, r.a, r.b)
 	v.show_at_center(r)
 	if len(p[4])>0:
 		msg(u"{0} ({1})".format(p[3], p[4]))
 	else:
 		msg(p[3])
+	printProblem(p)
 
 def problemSolved(v, p):
 	rl = v.get_regions(p[5])
@@ -55,37 +54,35 @@ def problemSolved(v, p):
 
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
-	def run(self, edit, jumpForward):
+	def run(self, edit, jumpForward = True):
 		global problems
+		v = self.view
 		if len(problems) > 0:
-			caretPos = self.view.sel()[0].begin()
-			probInds = range(0, len(problems))
+			sel = v.sel()[0]
 			if jumpForward:
-				for ind in probInds: # forward search
-					p = problems[ind]
-					r = self.view.get_regions(p[5])[0];
-					if (not problemSolved(self.view, p)) and (r.a > caretPos):
-						selectProblem(self, p)
+				for p in problems:
+					r = v.get_regions(p[5])[0];
+					if (not problemSolved(v, p)) and (sel.begin() < r.a):
+						selectProblem(v, p)
 						return
 			else:
-				for ind in reversed(probInds): # backward search
-					p = problems[ind]
-					r = self.view.get_regions(p[5])[0];
-					if (not problemSolved(self.view, p)) and (r.a < caretPos):
-						selectProblem(self, p)
+				for p in reversed(problems):
+					r = v.get_regions(p[5])[0];
+					if (not problemSolved(v, p)) and (r.a < sel.begin()):
+						selectProblem(v, p)
 						return
 		msg("no further language problems to fix")
 
-def onSuggestionListSelect(self, edit, p, suggestions, choice):
+def onSuggestionListSelect(v, edit, p, suggestions, choice):
 	global problems
 	if choice != -1:
-		r = self.view.get_regions(p[5])[0]
-		self.view.replace(edit, r, suggestions[choice])
+		r = v.get_regions(p[5])[0]
+		v.replace(edit, r, suggestions[choice])
 		c = r.a + len(suggestions[choice])
-		moveCaret(self, c, c) # move caret to end of region
-		self.view.run_command("goto_next_language_problem", {"jumpForward": True})
+		moveCaret(v, c, c) # move caret to end of region
+		v.run_command("goto_next_language_problem")
 	else:
-		selectProblem(self, p)
+		selectProblem(v, p)
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
@@ -94,16 +91,15 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		sel = v.sel()[0]
 		for p in problems:
 			r = v.get_regions(p[5])[0]
-			nextCaretPos = r.b;
-			if (r.a, r.b) == (sel.begin(), sel.end()):
+			nextCaretPos = r.a;
+			if r == sel:
 				if applyFix and (len(p[4])>0):
-
 					# fix selected problem:
 					if '#' in p[4]:
 						# there are multiple suggestions
 						suggestions = p[4].split('#')
-						f1 = lambda i : onSuggestionListSelect(self, edit, p, suggestions, i)
-						v.window().show_quick_panel(suggestions, f1)
+						callbackF = lambda i : onSuggestionListSelect(v, edit, p, suggestions, i)
+						v.window().show_quick_panel(suggestions, callbackF)
 						return
 					else:
 						# there is a single suggestion
@@ -115,7 +111,8 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 					if p[2] == "Possible Typo":
 						# if this is a typo then include all identical typos in the
 						# list of problems to be fixed
-						ignoreProbs = [px for px in problems if px[6]==p[6]]
+						pID = lambda py : (py[2], py[6]) # (msg, orgContent)
+						ignoreProbs = [px for px in problems if pID(p)==pID(px)]
 					else:
 						# otherwise select just this one problem
 						ignoreProbs = [p]
@@ -124,57 +121,66 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 						ignoreProblem(p2, v, self, edit)
 
 				# after either fixing or ignoring:
-				moveCaret(self, nextCaretPos, nextCaretPos) # move caret to end of region
-				v.run_command("goto_next_language_problem", {"jumpForward": True})
+				moveCaret(v, nextCaretPos, nextCaretPos) # move caret to end of region
+				v.run_command("goto_next_language_problem")
 				return
 
 		# if no problems are selected:
 		msg('no language problem selected')
 
 def ignoreProblem(p, v, self, edit):
+	# dummy edit to enable undoing ignore
 	r = v.get_regions(p[5])[0]
-	v.insert(edit, v.size(), "") # dummy edit to enable undoing ignore
-	dummyR = sublime.Region(r.a, r.a)
-	v.add_regions(p[5], [dummyR], "string", "", sublime.DRAW_OUTLINED)
+	v.insert(edit, v.size(), "")
+	# change region associated with this problem to a 0-length region
+	dummyRg = sublime.Region(r.a, r.a)
+	v.add_regions(p[5], [dummyRg], "string", "", sublime.DRAW_OUTLINED)
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
-		clearProblems(self)
+		v = self.view
+		clearProblems(v)
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
-		v = self.view
 		strText = v.substr(sublime.Region(0, v.size()))
 		data = urllib.urlencode({'language' : 'en-GB', 'text': strText.encode('utf8')})
 		try:
 			content = urllib.urlopen(server, data).read()
+			root = xml.etree.ElementTree.fromstring(content)
 		except IOError:
 			msg('error, unable to connect via http, is LanguageTool running?')
+		except xml.parsers.expat.ExpatError:
+			msg('could not parse server response (may be due to quota if using http://languagetool.org)')
 		else:
-			root = xml.etree.ElementTree.fromstring(content)
 			ind = 0;
+			fields_int = ["fromx", "fromy", "tox", "toy"]
+			fields_str = ["category", "msg", "replacements"]
 			for child in root:
 				if child.tag == "error":
-					ax = int(child.attrib["fromx"])
-					ay = int(child.attrib["fromy"])
-					bx = int(child.attrib["tox"])
-					by = int(child.attrib["toy"])
+					ax, ay, bx, by = [int(child.attrib[x]) for x in fields_int]
+					category, message, replacements = [child.attrib[x] for x in fields_str]
 					a = v.text_point(ay, ax);
 					b = v.text_point(by, bx);
-					category = child.attrib["category"]
-					message = child.attrib["msg"]
-					replacements = child.attrib["replacements"]
 					region = sublime.Region(a, b)
 					regionKey = getProbKey(ind)
 					v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
 					orgContent = v.substr(region)
 					p = (a, b, category, message, replacements, regionKey, orgContent)
 					problems.append(p)
+					printProblem(p)
 					ind += 1
 			if ind>0:
-				selectProblem(self, problems[0])
+				selectProblem(v, problems[0])
 			else:
 				msg("no language problems were found :-)")
+
+# used for debugging
+def printProblem(p):
+	return
+	a = str(p[0])
+	b = str(p[1])
+	print("%4s -> %4s : %-10s (%s)" % (a, b, p[6], p[3]))
 
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
