@@ -38,7 +38,7 @@ def selectProblem(self, p):
 	moveCaret(self, r.a, r.b)
 	v.show_at_center(r)
 	if len(p[4])>0:
-		msg("{0} ({1})".format(p[3], p[4]))
+		msg(u"{0} ({1})".format(p[3], p[4]))
 	else:
 		msg(p[3])
 
@@ -97,22 +97,45 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 			nextCaretPos = r.b;
 			if (r.a, r.b) == (sel.begin(), sel.end()):
 				if applyFix and (len(p[4])>0):
-					if '#' in p[4]: # multiple suggestions
+
+					# fix selected problem:
+					if '#' in p[4]:
+						# there are multiple suggestions
 						suggestions = p[4].split('#')
 						f1 = lambda i : onSuggestionListSelect(self, edit, p, suggestions, i)
 						v.window().show_quick_panel(suggestions, f1)
 						return
-					else: # single suggestion
-						v.replace(edit, r, p[4]) # apply correction
+					else:
+						# there is a single suggestion
+						v.replace(edit, r, p[4])
 						nextCaretPos = r.a + len(p[4])
 				else:
-					v.insert(edit, v.size(), "") # dummy edit to enable undoing ignore
-					dummyR = sublime.Region(r.a, r.a)
-					v.add_regions(p[5], [dummyR], "string", "", sublime.DRAW_OUTLINED)
+
+					# ignore problem:
+					if p[2] == "Possible Typo":
+						# if this is a typo then include all identical typos in the
+						# list of problems to be fixed
+						ignoreProbs = [px for px in problems if px[6]==p[6]]
+					else:
+						# otherwise select just this one problem
+						ignoreProbs = [p]
+
+					for p2 in ignoreProbs:
+						ignoreProblem(p2, v, self, edit)
+
+				# after either fixing or ignoring:
 				moveCaret(self, nextCaretPos, nextCaretPos) # move caret to end of region
 				v.run_command("goto_next_language_problem", {"jumpForward": True})
 				return
+
+		# if no problems are selected:
 		msg('no language problem selected')
+
+def ignoreProblem(p, v, self, edit):
+	r = v.get_regions(p[5])[0]
+	v.insert(edit, v.size(), "") # dummy edit to enable undoing ignore
+	dummyR = sublime.Region(r.a, r.a)
+	v.add_regions(p[5], [dummyR], "string", "", sublime.DRAW_OUTLINED)
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -122,7 +145,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		v = self.view
 		strText = v.substr(sublime.Region(0, v.size()))
-		data = urllib.urlencode({'language' : 'en-US', 'text': strText.encode('utf8')})
+		data = urllib.urlencode({'language' : 'en-GB', 'text': strText.encode('utf8')})
 		try:
 			content = urllib.urlopen(server, data).read()
 		except IOError:
