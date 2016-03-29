@@ -118,7 +118,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
 		clearProblems(self)
-		settings = sublime.load_settings("languagetool.sublime-settings")
+		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		v = self.view
 		strText = v.substr(sublime.Region(0, v.size()))
