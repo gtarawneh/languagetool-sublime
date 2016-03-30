@@ -1,6 +1,6 @@
 #### Brief Summary
 
-This is a simple adapter to integrate [LanguageTool](https://languagetool.org/) (an open source proof-reading program) into [Sublime Text](https://www.sublimetext.com/).
+This is a simple adapter to integrate [LanguageTool](https://languagetool.org/) (an open source proof-reading program) into [Sublime Text](https://www.sublimetext.com/). It is compatible with both ST2 and ST3.
 
 #### How to Install
 

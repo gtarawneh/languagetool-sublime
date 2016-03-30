@@ -3,9 +3,8 @@
 # This is a simple Sublime Text plugin for checking grammar. It passes buffer
 # content to LanguageTool (via http) and highlights reported problems.
 
-import sublime, sublime_plugin
-import xml.etree.ElementTree
-import urllib
+import sublime
+import sublime_plugin
 
 # problems is an array of n-tuples in the form
 # (x0, x1, msg, description, suggestions, regionID, orgContent)
@@ -73,11 +72,11 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 						return
 		msg("no further language problems to fix")
 
-def onSuggestionListSelect(v, edit, p, suggestions, choice):
+def onSuggestionListSelect(v, p, suggestions, choice):
 	global problems
 	if choice != -1:
 		r = v.get_regions(p[5])[0]
-		v.replace(edit, r, suggestions[choice])
+		v.run_command('insert', {'characters': suggestions[choice]})
 		c = r.a + len(suggestions[choice])
 		moveCaret(v, c, c) # move caret to end of region
 		v.run_command("goto_next_language_problem")
@@ -98,7 +97,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 					if '#' in p[4]:
 						# there are multiple suggestions
 						suggestions = p[4].split('#')
-						callbackF = lambda i : onSuggestionListSelect(v, edit, p, suggestions, i)
+						callbackF = lambda i : onSuggestionListSelect(v, p, suggestions, i)
 						v.window().show_quick_panel(suggestions, callbackF)
 						return
 					else:
@@ -154,37 +153,35 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		strText = v.substr(sublime.Region(0, v.size()))
-		strText = preprocessText(strText);
-		data = urllib.urlencode({'language' : 'en-GB', 'text': strText.encode('utf8')})
-		try:
-			content = urllib.urlopen(server, data).read()
-			root = xml.etree.ElementTree.fromstring(content)
-		except IOError:
+		content = LTServer.getResponse(server, preprocessText(strText))
+		if content == None:
 			msg('error, unable to connect via http, is LanguageTool running?')
-		except xml.parsers.expat.ExpatError:
+			return
+		root = LTServer.parseResponse(content)
+		if root == None:
 			msg('could not parse server response (may be due to quota if using http://languagetool.org)')
+			return
+		ind = 0;
+		fields_int = ["fromx", "fromy", "tox", "toy"]
+		fields_str = ["category", "msg", "replacements"]
+		for child in root:
+			if child.tag == "error":
+				ax, ay, bx, by = [int(child.attrib[x]) for x in fields_int]
+				category, message, replacements = [child.attrib[x] for x in fields_str]
+				a = v.text_point(ay, ax)
+				b = v.text_point(by, bx)
+				region = sublime.Region(a, b)
+				regionKey = getProbKey(ind)
+				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
+				orgContent = v.substr(region)
+				p = (a, b, category, message, replacements, regionKey, orgContent)
+				problems.append(p)
+				printProblem(p)
+				ind += 1
+		if ind>0:
+			selectProblem(v, problems[0])
 		else:
-			ind = 0;
-			fields_int = ["fromx", "fromy", "tox", "toy"]
-			fields_str = ["category", "msg", "replacements"]
-			for child in root:
-				if child.tag == "error":
-					ax, ay, bx, by = [int(child.attrib[x]) for x in fields_int]
-					category, message, replacements = [child.attrib[x] for x in fields_str]
-					a = v.text_point(ay, ax);
-					b = v.text_point(by, bx);
-					region = sublime.Region(a, b)
-					regionKey = getProbKey(ind)
-					v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
-					orgContent = v.substr(region)
-					p = (a, b, category, message, replacements, regionKey, orgContent)
-					problems.append(p)
-					printProblem(p)
-					ind += 1
-			if ind>0:
-				selectProblem(v, problems[0])
-			else:
-				msg("no language problems were found :-)")
+			msg("no language problems were found :-)")
 
 # used for debugging
 def printProblem(p):
