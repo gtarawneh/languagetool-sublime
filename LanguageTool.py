@@ -16,18 +16,14 @@ def moveCaret(view, i, j):
 	view.sel().clear()
 	view.sel().add(sublime.Region(target, target+j-i))
 
-# returns key of region i
-def getProbKey(i):
-	return "p" + str(i)
-
 # wrapper
 def msg(str):
 	sublime.status_message(str)
 
 def clearProblems(v):
 	global problems
-	for i in range(0, len(problems)):
-		v.erase_regions(getProbKey(i))
+	for p in problems:
+		v.erase_regions(p[5])
 	problems = []
 
 def selectProblem(v, p):
@@ -128,12 +124,12 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		msg('no language problem selected')
 
 def ignoreProblem(p, v, self, edit):
-	# dummy edit to enable undoing ignore
-	r = v.get_regions(p[5])[0]
-	v.insert(edit, v.size(), "")
 	# change region associated with this problem to a 0-length region
+	r = v.get_regions(p[5])[0]
 	dummyRg = sublime.Region(r.a, r.a)
 	v.add_regions(p[5], [dummyRg], "string", "", sublime.DRAW_OUTLINED)
+	# dummy edit to enable undoing ignore
+	v.insert(edit, v.size(), "")
 
 # changes text before submitting it to LanguageTool
 def preprocessText(str):
@@ -161,7 +157,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		if root == None:
 			msg('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
-		ind = 0;
 		fields_int = ["fromx", "fromy", "tox", "toy"]
 		fields_str = ["category", "msg", "replacements"]
 		for child in root:
@@ -171,14 +166,14 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				a = v.text_point(ay, ax)
 				b = v.text_point(by, bx)
 				region = sublime.Region(a, b)
-				regionKey = getProbKey(ind)
+				regionKey = str(len(problems))
+				print("added region with key ", regionKey)
 				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
 				orgContent = v.substr(region)
 				p = (a, b, category, message, replacements, regionKey, orgContent)
 				problems.append(p)
 				printProblem(p)
-				ind += 1
-		if ind>0:
+		if len(problems) > 0:
 			selectProblem(v, problems[0])
 		else:
 			msg("no language problems were found :-)")
