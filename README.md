@@ -25,14 +25,6 @@ All plugin commands and their keyboard shortcuts can be listed in the command pa
 
 The adapter sends the text to be checked to a LanguageTool server via http. The server is initially configured (in the file `LanguageTool.sublime-settings`) as `https://languagetool.org:8081/`. This is just to get the adapter up and running after installation and should not be kept for continuous use. Please download LanguageTool then run and configure the adapter to use [your own LanguageTool server](http://wiki.languagetool.org/http-server).
 
-#### Issues
-
-The adapter is fully functional but has few nags which I'll try to address in the future:
-
-* Re-running the language check will highlight all existing problems including any which have been previously ignored by the user (via `Alt+Left`)
-* When a sentence is preceded by exactly 1 new line, problem highlights are offset by 1 character. This appears to be an issue with LanguageTool. If you notice any sentences where the highlights are off you can add one more (temporary) new lines before running language check as a walk-around solution.
-* When running on tex or markdown files LanguageTool may incorrectly identify certain sequence like~this as typos.
-
 #### Contributing
 
 Feel free to fork and improve. I tried to keep things neat and tidy but I've never coded in python and have little experience with sublime so please forgive any coding idiosyncrasies.
