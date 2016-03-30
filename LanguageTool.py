@@ -136,6 +136,16 @@ def ignoreProblem(p, v, self, edit):
 	dummyRg = sublime.Region(r.a, r.a)
 	v.add_regions(p[5], [dummyRg], "string", "", sublime.DRAW_OUTLINED)
 
+# changes text before submitting it to LanguageTool
+def preprocessText(str):
+	# For some reason LanguageTool (v3.3) returns incorrect problem x/y offsets
+	# for sentences that are preceded by exactly two \n chars. As a walk-around,
+	# replace all such occurrences with "\n!\n".
+	while "\n\n" in str:
+		str = str.replace("\n\n", "\n!\n")
+
+	return str
+
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
@@ -144,6 +154,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		strText = v.substr(sublime.Region(0, v.size()))
+		strText = preprocessText(strText);
 		data = urllib.urlencode({'language' : 'en-GB', 'text': strText.encode('utf8')})
 		try:
 			content = urllib.urlopen(server, data).read()
