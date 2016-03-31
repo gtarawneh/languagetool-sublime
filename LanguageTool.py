@@ -6,6 +6,14 @@
 import sublime
 import sublime_plugin
 
+def _is_ST2():
+	return (int(sublime.version()) < 3000)
+
+if _is_ST2():
+	import LTServer
+else:
+	from . import LTServer
+
 # problems is an array of n-tuples in the form
 # (x0, x1, msg, description, suggestions, regionID, orgContent)
 problems = []
@@ -167,7 +175,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				b = v.text_point(by, bx)
 				region = sublime.Region(a, b)
 				regionKey = str(len(problems))
-				print("added region with key ", regionKey)
 				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
 				orgContent = v.substr(region)
 				p = (a, b, category, message, replacements, regionKey, orgContent)
