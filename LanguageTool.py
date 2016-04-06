@@ -33,6 +33,7 @@ def clearProblems(v):
 	for p in problems:
 		v.erase_regions(p[5])
 	problems = []
+	recompHighlights(v)
 
 def selectProblem(v, p):
 	r = v.get_regions(p[5])[0]
@@ -157,6 +158,9 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		strText = v.substr(sublime.Region(0, v.size()))
+		checkRegion = v.sel()[0]
+		if checkRegion.empty():
+			checkRegion = sublime.Region(0, v.size())
 		content = LTServer.getResponse(server, preprocessText(strText))
 		if content == None:
 			msg('error, unable to connect via http, is LanguageTool running?')
@@ -174,12 +178,13 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				a = v.text_point(ay, ax)
 				b = v.text_point(by, bx)
 				region = sublime.Region(a, b)
-				regionKey = str(len(problems))
-				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
-				orgContent = v.substr(region)
-				p = (a, b, category, message, replacements, regionKey, orgContent)
-				problems.append(p)
-				printProblem(p)
+				if checkRegion.contains(region):
+					regionKey = str(len(problems))
+					v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
+					orgContent = v.substr(region)
+					p = (a, b, category, message, replacements, regionKey, orgContent)
+					problems.append(p)
+					printProblem(p)
 		if len(problems) > 0:
 			selectProblem(v, problems[0])
 		else:
@@ -195,8 +200,11 @@ def printProblem(p):
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
 		# buffer text was changed, recompute region highlights
-		for p in problems:
-			rL = view.get_regions(p[5])
-			if len(rL) > 0:
-				regionScope = "" if problemSolved(view, p) else "string"
-				view.add_regions(p[5], rL, regionScope, "",  sublime.DRAW_OUTLINED)
+		recompHighlights(view)
+
+def recompHighlights(view):
+	for p in problems:
+		rL = view.get_regions(p[5])
+		if len(rL) > 0:
+			regionScope = "" if problemSolved(view, p) else "string"
+			view.add_regions(p[5], rL, regionScope, "",  sublime.DRAW_OUTLINED)
