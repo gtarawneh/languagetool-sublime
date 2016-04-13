@@ -12,12 +12,12 @@ To find your packages directory open-up the console (click `View` then `Show Con
 
 Open the (plain text) file you want LanguageTool to proof-read then:
 
-1. Run a language check (`Ctrl+Shift+r`). Any problems identified by LanguageTool will be highlighted.
+1. Run a language check (`Ctrl+Shift+c`). Any problems identified by LanguageTool will be highlighted.
 2. Move focus between the problems using `Alt+Down` (next) and `Alt+Up` (previous).
 3. Each time a problem is in focus, the status bar will display a description of the problem and (if available) suggested corrections between brackets.
-4. Begin typing to correct a selected problem or press `Alt+Right` to apply suggested corrections if available.
-5. To ignore the selected problem, press `Alt+Left`.
-6. Auto-correcting a problem (`Alt+Right`) or ignoring it (`Alt+Left`) will automatically move focus to the next problem.
+4. Begin typing to correct a selected problem or press `Alt+f` to apply suggested corrections if available.
+5. To ignore the selected problem, press `Alt+d`.
+6. Auto-correcting a problem (`Alt+f`) or ignoring it (`Alt+d`) will automatically move focus to the next problem.
 
 All plugin commands and their keyboard shortcuts can be listed in the command palette by typing `LanguageTool:`.
 
