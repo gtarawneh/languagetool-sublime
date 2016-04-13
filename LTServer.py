@@ -24,7 +24,7 @@ def _is_ST2():
 	return (int(sublime.version()) < 3000)
 
 def _getResponse_ST2(server, text):
-	data = urllib.urlencode({'language' : 'en-GB', 'text': text.encode('utf8')})
+	data = urllib.urlencode({'autodetect' : 'yes', 'text': text.encode('utf8')})
 	try:
 		content = urllib.urlopen(server, data).read()
 	except IOError:
@@ -33,7 +33,7 @@ def _getResponse_ST2(server, text):
 		return content
 
 def _getResponse_ST3(server, text):
-	data = urllib.parse.urlencode({'language' : 'en-GB', 'text': text.encode('utf8')})
+	data = urllib.parse.urlencode({'autodetect' : 'yes', 'text': text.encode('utf8')})
 	data = data.encode('utf8')
 	try:
 		content = urllib.request.urlopen(server, data).read()
