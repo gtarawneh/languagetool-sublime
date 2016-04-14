@@ -88,6 +88,11 @@ def onSuggestionListSelect(v, p, suggestions, choice):
 	else:
 		selectProblem(v, p)
 
+class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		global problemSolved
+		clearProblems(self.view)
+
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
 		global problems

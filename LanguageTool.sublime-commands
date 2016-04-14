@@ -22,5 +22,9 @@
 		"caption": "LanguageTool: Ignore Problem",
 		"command": "mark_language_problem_solved",
 		"args": {"applyFix": false}
+	},
+	{
+		"caption": "LanguageTool: Clear Problems",
+		"command": "clear_language_problems"
 	}
 ]
