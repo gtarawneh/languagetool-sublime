@@ -4,7 +4,7 @@ This is a simple adapter to integrate [LanguageTool](https://languagetool.org/) 
 
 #### How to Install
 
-Go to your Sublime Text packages directory and execute `git clone git://github.com/gtarawneh/languagetool-sublime.git LanguageTool`. The plugin will become available for use instantly.
+Go to your Sublime Text packages directory and execute `git clone git://github.com/gtarawneh/languagetool-sublime.git`. The plugin will become available for use instantly.
 
 To find your packages directory open-up the console (click `View` then `Show Console` from the menu) and execute `sublime.packages_path()`.
 

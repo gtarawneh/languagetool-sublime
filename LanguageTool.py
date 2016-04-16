@@ -18,6 +18,13 @@ else:
 # (x0, x1, msg, description, suggestions, regionID, orgContent)
 problems = []
 
+languages = [
+	("Autodetect Language", "auto"),
+	("English (US)",  "en-US"),
+	("English (UK)",  "en-GB"),
+	("French", "fr")
+];
+
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
 	target = view.text_point(0, i)
@@ -137,6 +144,31 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		# if no problems are selected:
 		msg('no language problem selected')
 
+class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		global languages
+		languageNames = [x[0] for x in languages]
+		onLanguageListSelect_wrapper = lambda i : onLanguageListSelect(i, self.view)
+		self.view.window().show_quick_panel(languageNames, onLanguageListSelect_wrapper)
+
+def onLanguageListSelect(i, view):
+	global languages
+	l = languages[i][1]
+	s = view.settings()
+	key = 'language_tool_language'
+	if i==0:
+		s.erase(key)
+	else:
+		s.set(key, l)
+
+def getLanguage(view):
+	s = view.settings()
+	key = 'language_tool_language'
+	if s.has(key):
+		return s.get(key)
+	else:
+		return "autodetect"
+
 def ignoreProblem(p, v, self, edit):
 	# change region associated with this problem to a 0-length region
 	r = v.get_regions(p[5])[0]
@@ -166,7 +198,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		checkRegion = v.sel()[0]
 		if checkRegion.empty():
 			checkRegion = sublime.Region(0, v.size())
-		content = LTServer.getResponse(server, preprocessText(strText))
+		lang = getLanguage(v)
+		content = LTServer.getResponse(server, preprocessText(strText), lang)
 		if content == None:
 			msg('error, unable to connect via http, is LanguageTool running?')
 			return

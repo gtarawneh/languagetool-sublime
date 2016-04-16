@@ -26,5 +26,9 @@
 	{
 		"caption": "LanguageTool: Clear Problems",
 		"command": "clear_language_problems"
+	},
+	{
+		"caption": "LanguageTool: Change Language",
+		"command": "change_language_tool_language"
 	}
 ]

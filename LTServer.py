@@ -5,11 +5,11 @@ import xml.etree.ElementTree
 import urllib
 
 # posts `text` to `server`, returns server response or, when failing, None
-def getResponse(server, text):
+def getResponse(server, text, lang):
 	if _is_ST2():
-		return _getResponse_ST2(server, text)
+		return _getResponse_ST2(server, text, lang)
 	else:
-		return _getResponse_ST3(server, text)
+		return _getResponse_ST3(server, text, lang)
 
 # parses an xml string
 def parseResponse(content):
@@ -20,11 +20,17 @@ def parseResponse(content):
 
 # internal functions:
 
+def getPost(text, lang):
+	if lang == "autodetect":
+		return {'autodetect' : 'yes', 'text': text.encode('utf8')}
+	else:
+		return {"language": lang, 'text': text.encode('utf8')}
+
 def _is_ST2():
 	return (int(sublime.version()) < 3000)
 
-def _getResponse_ST2(server, text):
-	data = urllib.urlencode({'autodetect' : 'yes', 'text': text.encode('utf8')})
+def _getResponse_ST2(server, text, lang):
+	data = urllib.urlencode(getPost(text, lang))
 	try:
 		content = urllib.urlopen(server, data).read()
 	except IOError:
@@ -32,8 +38,8 @@ def _getResponse_ST2(server, text):
 	else:
 		return content
 
-def _getResponse_ST3(server, text):
-	data = urllib.parse.urlencode({'autodetect' : 'yes', 'text': text.encode('utf8')})
+def _getResponse_ST3(server, text, lang):
+	data = urllib.parse.urlencode(getPost(text, lang))
 	data = data.encode('utf8')
 	try:
 		content = urllib.request.urlopen(server, data).read()
