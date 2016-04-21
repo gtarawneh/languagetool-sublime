@@ -18,12 +18,22 @@ else:
 # (x0, x1, msg, description, suggestions, regionID, orgContent)
 problems = []
 
+# languages is an array of tuples in the format
+# (name, code)
+# the below is for illustratin, actual entries are loaded
+# from languages.txt
 languages = [
 	("Autodetect Language", "auto"),
 	("English (US)",  "en-US"),
 	("English (UK)",  "en-GB"),
 	("French", "fr")
 ];
+
+def loadLanguages():
+	global languages
+	f = open('languages.txt', 'r')
+	ls = [l.strip().split(',') for l in f.readlines()]
+	languages = [(l[0], l[1]) for l in ls]
 
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
@@ -147,6 +157,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global languages
+		loadLanguages()
 		languageNames = [x[0] for x in languages]
 		onLanguageListSelect_wrapper = lambda i : onLanguageListSelect(i, self.view)
 		self.view.window().show_quick_panel(languageNames, onLanguageListSelect_wrapper)
