@@ -113,6 +113,7 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 						selectProblem(v, p)
 						return
 		setStatusBar("no further language problems to fix")
+		sublime.active_window().run_command("hide_panel", {"panel": "output.languagetool"})
 
 def onSuggestionListSelect(v, p, suggestions, choice):
 	global problems
