@@ -20,14 +20,17 @@ else:
 # (x0, x1, msg, description, suggestions, regionID, orgContent)
 problems = []
 
+# displayMode determines where problem details are printed
+# supported modes are 'statusbar' or 'panel'
+displayMode = 'statusbar';
+
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
 	target = view.text_point(0, i)
 	view.sel().clear()
 	view.sel().add(sublime.Region(target, target+j-i))
 
-# wrapper
-def msg(str):
+def setStatusBar(str):
 	sublime.status_message(str)
 
 def clearProblems(v):
@@ -42,9 +45,9 @@ def selectProblem(v, p):
 	moveCaret(v, r.a, r.b)
 	v.show_at_center(r)
 	if len(p[4])>0:
-		msg(u"{0} ({1})".format(p[3], p[4]))
+		showProblem(p[3], p[4])
 	else:
-		msg(p[3])
+		showProblem(p[3])
 	printProblem(p)
 
 def problemSolved(v, p):
@@ -57,6 +60,38 @@ def problemSolved(v, p):
 	# 1. its region has zero length
 	# 2. its contents have been changed
 	return r.empty() or (v.substr(r) != p[6])
+
+def showProblem(msg, replacements = None):
+	global displayMode
+	if displayMode == 'panel':
+		showProblemPanel(msg, replacements)
+	else:
+		showProblemStatusBar(msg, replacements)
+
+def showProblemPanel(msg, replacements = None):
+	if replacements is None:
+		showPanelText(msg);
+	else:
+		replacements2 = ', '.join(replacements.split('#'))
+		showPanelText("%s\n\nSuggestion(s): %s" % (msg, replacements2));
+
+def showProblemStatusBar(msg, replacements = None):
+	if replacements is None:
+		str = msg
+	else:
+		str = u"{0} ({1})".format(msg, replacements)
+	sublime.status_message(str)
+
+def showPanelText(str):
+	window = sublime.active_window();
+	pt = window.get_output_panel("languagetool")
+	pt.set_read_only(False)
+	if (_is_ST2):
+		edit = pt.begin_edit()
+	pt.insert(edit, pt.size(), str)
+	if (_is_ST2):
+		pt.end_edit(edit)
+	window.run_command("show_panel", {"panel": "output.languagetool"})
 
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
@@ -77,7 +112,7 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 					if (not problemSolved(v, p)) and (r.a < sel.begin()):
 						selectProblem(v, p)
 						return
-		msg("no further language problems to fix")
+		setStatusBar("no further language problems to fix")
 
 def onSuggestionListSelect(v, p, suggestions, choice):
 	global problems
@@ -137,7 +172,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 				return
 
 		# if no problems are selected:
-		msg('no language problem selected')
+		setStatusBar('no language problem selected')
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -186,10 +221,12 @@ def preprocessText(str):
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
+		global displayMode
 		v = self.view
 		clearProblems(v)
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
+		displayMode = settings.get('display_mode', 'statusbar')
 		strText = v.substr(sublime.Region(0, v.size()))
 		checkRegion = v.sel()[0]
 		if checkRegion.empty():
@@ -197,11 +234,11 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		lang = getLanguage(v)
 		content = LTServer.getResponse(server, preprocessText(strText), lang)
 		if content == None:
-			msg('error, unable to connect via http, is LanguageTool running?')
+			setStatusBar('error, unable to connect via http, is LanguageTool running?')
 			return
 		root = LTServer.parseResponse(content)
 		if root == None:
-			msg('could not parse server response (may be due to quota if using http://languagetool.org)')
+			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
 		fields_int = ["fromx", "fromy", "tox", "toy"]
 		fields_str = ["category", "msg", "replacements"]
@@ -222,7 +259,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		if len(problems) > 0:
 			selectProblem(v, problems[0])
 		else:
-			msg("no language problems were found :-)")
+			setStatusBar("no language problems were found :-)")
 
 # used for debugging
 def printProblem(p):
