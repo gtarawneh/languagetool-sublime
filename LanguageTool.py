@@ -83,15 +83,26 @@ def showProblemStatusBar(msg, replacements = None):
 	sublime.status_message(str)
 
 def showPanelText(str):
+	if (_is_ST2()):
+		showPanelTextST2(str)
+	else:
+		sublime.active_window().run_command('set_language_tool_panel_text', {'str': str})
+
+def showPanelTextST2(str):
 	window = sublime.active_window();
 	pt = window.get_output_panel("languagetool")
 	pt.set_read_only(False)
-	if (_is_ST2):
-		edit = pt.begin_edit()
+	edit = pt.begin_edit()
 	pt.insert(edit, pt.size(), str)
-	if (_is_ST2):
-		pt.end_edit(edit)
 	window.run_command("show_panel", {"panel": "output.languagetool"})
+
+class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
+	def run(self, edit, str):
+		window = sublime.active_window();
+		pt = window.get_output_panel("languagetool")
+		pt.set_read_only(False)
+		pt.insert(edit, pt.size(), str)
+		window.run_command("show_panel", {"panel": "output.languagetool"})
 
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
