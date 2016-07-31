@@ -22,7 +22,7 @@ def parseResponse(content):
 
 def getPost(text, lang):
 	if lang == "autodetect":
-		return {'autodetect' : 'yes', 'text': text.encode('utf8')}
+		return {'autodetect' : '1', 'text': text.encode('utf8')}
 	else:
 		return {"language": lang, 'text': text.encode('utf8')}
 
