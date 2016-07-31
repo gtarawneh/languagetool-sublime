@@ -27,7 +27,14 @@ All plugin commands and their keyboard shortcuts can be listed in the command pa
 
 #### Server Configuration
 
-The adapter sends the text to be checked to a LanguageTool server via http. The server is initially configured (in the file `LanguageTool.sublime-settings`) as `https://languagetool.org:8081/`. This is just to get the adapter up and running after installation and should not be kept for continuous use. Please download LanguageTool then run and configure the adapter to use [your own LanguageTool server](http://wiki.languagetool.org/http-server).
+The adapter sends the text to be checked to a LanguageTool server via https. The server is initially configured (in the file `LanguageTool.sublime-settings`) as `https://languagetool.org:8081/`. There are few limitations on checking texts using this public server including:
+
+1. Maximum text size of 50Kb
+2. Access limited to 20 requests/minute per IP
+
+(See http://wiki.languagetool.org/public-http-api for full details.)
+
+For better performance and to check texts without the above limitations you can download LanguageTool then run and configure the adapter to use [your own LanguageTool server](http://wiki.languagetool.org/http-server).
 
 #### Contributing
 
