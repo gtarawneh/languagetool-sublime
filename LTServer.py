@@ -22,9 +22,9 @@ def parseResponse(content):
 
 def getPost(text, lang):
 	if lang == "autodetect":
-		return {'autodetect' : '1', 'text': text.encode('utf8')}
+		return {'autodetect' : '1', 'text': text.encode('utf8'), 'useragent': 'sublime'}
 	else:
-		return {"language": lang, 'text': text.encode('utf8')}
+		return {'language': lang, 'text': text.encode('utf8'), 'useragent': 'sublime'}
 
 def _is_ST2():
 	return (int(sublime.version()) < 3000)
