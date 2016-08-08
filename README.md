@@ -36,6 +36,10 @@ The adapter sends the text to be checked to a LanguageTool server via https. The
 
 For better performance and to check texts without the above limitations you can download LanguageTool then run and configure the adapter to use [your own LanguageTool server](http://wiki.languagetool.org/http-server).
 
+#### License
+
+This plugin is freely available under [GPLv2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html) or later.
+
 #### Contributing
 
 Feel free to fork and improve. I tried to keep things neat and tidy but I've never coded in python and have little experience with sublime so please forgive any coding idiosyncrasies.
