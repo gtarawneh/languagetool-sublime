@@ -11,7 +11,13 @@ import json
 strPath = os.path.join(os.path.dirname(__file__), "requests")
 sys.path.append(strPath)
 
-from . import requests
+def _is_ST2():
+	return (int(sublime.version()) < 3000)
+
+if _is_ST2():
+	import requests
+else:
+	from . import requests
 
 def getResponseNewAPI(server, text, lang):
 	server = 'https://languagetool.org/api/v2/check'
@@ -46,9 +52,6 @@ def getPost(text, lang):
 		return {'autodetect' : '1', 'text': text.encode('utf8'), 'useragent': 'sublime'}
 	else:
 		return {'language': lang, 'text': text.encode('utf8'), 'useragent': 'sublime'}
-
-def _is_ST2():
-	return (int(sublime.version()) < 3000)
 
 def _getResponse_ST2(server, text, lang):
 	data = urllib.urlencode(getPost(text, lang))
