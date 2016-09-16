@@ -4,6 +4,27 @@ import sublime
 import xml.etree.ElementTree
 import urllib
 
+import sys
+import os
+import json
+
+strPath = os.path.join(os.path.dirname(__file__), "requests")
+sys.path.append(strPath)
+
+from . import requests
+
+def getResponseNewAPI(server, text, lang):
+	server = 'https://languagetool.org/api/v2/check'
+	lang = 'auto'
+	payload = {'text': text, 'language': lang, 'enabledOnly': 'false'}
+	print(payload)
+	r = requests.get(server, params = payload)
+	if r.status_code == 200:
+		return r.json()["matches"]
+	else:
+		return None
+	print(json.dumps(r.json(), indent = 4))
+
 # posts `text` to `server`, returns server response or, when failing, None
 def getResponse(server, text, lang):
 	if _is_ST2():

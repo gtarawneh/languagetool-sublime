@@ -72,7 +72,7 @@ def showProblemPanel(msg, replacements = None):
 	if replacements is None:
 		showPanelText(msg);
 	else:
-		replacements2 = ', '.join(replacements.split('#'))
+		replacements2 = ', '.join(replacements)
 		showPanelText("%s\n\nSuggestion(s): %s" % (msg, replacements2));
 
 def showProblemStatusBar(msg, replacements = None):
@@ -149,20 +149,18 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		sel = v.sel()[0]
 		for p in problems:
 			r = v.get_regions(p[5])[0]
+			suggestions = p[4]
 			nextCaretPos = r.a;
 			if r == sel:
-				if applyFix and (len(p[4])>0):
+				if applyFix and suggestions:
 					# fix selected problem:
-					if '#' in p[4]:
-						# there are multiple suggestions
-						suggestions = p[4].split('#')
+					if len(suggestions)>1:
 						callbackF = lambda i : onSuggestionListSelect(v, p, suggestions, i)
 						v.window().show_quick_panel(suggestions, callbackF)
 						return
 					else:
-						# there is a single suggestion
-						v.replace(edit, r, p[4])
-						nextCaretPos = r.a + len(p[4])
+						v.replace(edit, r, suggestions[0])
+						nextCaretPos = r.a + len(suggestions[0])
 				else:
 
 					# ignore problem:
@@ -244,30 +242,27 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		if checkRegion.empty():
 			checkRegion = sublime.Region(0, v.size())
 		lang = getLanguage(v)
-		content = LTServer.getResponse(server, preprocessText(strText), lang)
-		if content == None:
-			setStatusBar('error, unable to connect via http, is LanguageTool running?')
-			return
-		root = LTServer.parseResponse(content)
-		if root == None:
+		matches = LTServer.getResponseNewAPI(server, preprocessText(strText), lang)
+		if matches == None:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
-		fields_int = ["fromx", "fromy", "tox", "toy"]
-		fields_str = ["category", "msg", "replacements"]
-		for child in root:
-			if child.tag == "error":
-				ax, ay, bx, by = [int(child.attrib[x]) for x in fields_int]
-				category, message, replacements = [child.attrib[x] for x in fields_str]
-				a = v.text_point(ay, ax)
-				b = v.text_point(by, bx)
-				region = sublime.Region(a, b)
-				if checkRegion.contains(region):
-					regionKey = str(len(problems))
-					v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
-					orgContent = v.substr(region)
-					p = (a, b, category, message, replacements, regionKey, orgContent)
-					problems.append(p)
-					printProblem(p)
+		for match in matches:
+			# category, message, replacements = [child.attrib[x] for x in fields_str]
+			category = match['rule']['category']['name']
+			message = match['message']
+			replacements = [r['value'] for r in match['replacements']]
+			offset = match['offset']
+			length = match['length']
+			a = offset
+			b = offset + length
+			region = sublime.Region(a, b)
+			if checkRegion.contains(region):
+				regionKey = str(len(problems))
+				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
+				orgContent = v.substr(region)
+				p = (a, b, category, message, replacements, regionKey, orgContent)
+				problems.append(p)
+				printProblem(p)
 		if len(problems) > 0:
 			selectProblem(v, problems[0])
 		else:
