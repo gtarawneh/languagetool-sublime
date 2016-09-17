@@ -20,7 +20,7 @@ else:
 	from . import requests
 
 def getResponseNewAPI(server, text, lang):
-	server = 'https://languagetool.org/api/v2/check'
+	print(lang)
 	lang = 'auto'
 	payload = {'text': text, 'language': lang, 'enabledOnly': 'false'}
 	print(payload)

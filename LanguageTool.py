@@ -205,10 +205,7 @@ def onLanguageListSelect(i, view):
 def getLanguage(view):
 	s = view.settings()
 	key = 'language_tool_language'
-	if s.has(key):
-		return s.get(key)
-	else:
-		return "autodetect"
+	return s.get(key, 'auto')
 
 def ignoreProblem(p, v, self, edit):
 	# change region associated with this problem to a 0-length region
