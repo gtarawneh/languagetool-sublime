@@ -1,60 +1,32 @@
-# contains functions that handle http POST and xml parsing
-
 import sublime
-import xml.etree.ElementTree
 import urllib
 
 import sys
 import os
 import json
 
-strPath = os.path.join(os.path.dirname(__file__), "requests")
-sys.path.append(strPath)
+def getResponse(server, text, lang):
+	payload = {'language': lang, 'text': text.encode('utf8'), 'User-Agent': 'sublime'}
+	content = _post(server, payload)
+	if content:
+		j = json.loads(content.decode('utf-8'))
+		return j['matches']
+	else:
+		return None
+
+# internal functions:
 
 def _is_ST2():
 	return (int(sublime.version()) < 3000)
 
-if _is_ST2():
-	import requests
-else:
-	from . import requests
-
-def getResponseNewAPI(server, text, lang):
-	print(lang)
-	lang = 'auto'
-	payload = {'text': text, 'language': lang, 'enabledOnly': 'false'}
-	print(payload)
-	r = requests.get(server, params = payload)
-	if r.status_code == 200:
-		return r.json()["matches"]
-	else:
-		return None
-	print(json.dumps(r.json(), indent = 4))
-
-# posts `text` to `server`, returns server response or, when failing, None
-def getResponse(server, text, lang):
+def _post(server, payload):
 	if _is_ST2():
-		return _getResponse_ST2(server, text, lang)
+		return _post_ST2(server, payload)
 	else:
-		return _getResponse_ST3(server, text, lang)
+		return _post_ST3(server, payload)
 
-# parses an xml string
-def parseResponse(content):
-	if _is_ST2():
-		return _parseResponse_ST2(content)
-	else:
-		return _parseResponse_ST3(content)
-
-# internal functions:
-
-def getPost(text, lang):
-	if lang == "autodetect":
-		return {'autodetect' : '1', 'text': text.encode('utf8'), 'useragent': 'sublime'}
-	else:
-		return {'language': lang, 'text': text.encode('utf8'), 'useragent': 'sublime'}
-
-def _getResponse_ST2(server, text, lang):
-	data = urllib.urlencode(getPost(text, lang))
+def _post_ST2(server, payload):
+	data = urllib.urlencode(payload)
 	try:
 		content = urllib.urlopen(server, data).read()
 	except IOError:
@@ -62,8 +34,8 @@ def _getResponse_ST2(server, text, lang):
 	else:
 		return content
 
-def _getResponse_ST3(server, text, lang):
-	data = urllib.parse.urlencode(getPost(text, lang))
+def _post_ST3(server, payload):
+	data = urllib.parse.urlencode(payload)
 	data = data.encode('utf8')
 	try:
 		content = urllib.request.urlopen(server, data).read()
@@ -71,19 +43,3 @@ def _getResponse_ST3(server, text, lang):
 		return None
 	else:
 		return content
-
-def _parseResponse_ST2(content):
-	try:
-		root = xml.etree.ElementTree.fromstring(content)
-	except xml.parsers.expat.ExpatError:
-		return None
-	else:
-		return root
-
-def _parseResponse_ST3(content):
-	try:
-		root = xml.etree.ElementTree.fromstring(content)
-	except: # TODO: add exception
-		return None
-	else:
-		return root

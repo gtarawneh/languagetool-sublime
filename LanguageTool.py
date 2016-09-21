@@ -239,7 +239,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		if checkRegion.empty():
 			checkRegion = sublime.Region(0, v.size())
 		lang = getLanguage(v)
-		matches = LTServer.getResponseNewAPI(server, preprocessText(strText), lang)
+		matches = LTServer.getResponse(server, preprocessText(strText), lang)
 		if matches == None:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
