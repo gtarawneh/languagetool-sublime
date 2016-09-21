@@ -162,7 +162,6 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 						v.replace(edit, r, suggestions[0])
 						nextCaretPos = r.a + len(suggestions[0])
 				else:
-
 					# ignore problem:
 					if p[2] == "Possible Typo":
 						# if this is a typo then include all identical typos in the
@@ -172,15 +171,12 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 					else:
 						# otherwise select just this one problem
 						ignoreProbs = [p]
-
 					for p2 in ignoreProbs:
 						ignoreProblem(p2, v, self, edit)
-
 				# after either fixing or ignoring:
 				moveCaret(v, nextCaretPos, nextCaretPos) # move caret to end of region
 				v.run_command("goto_next_language_problem")
 				return
-
 		# if no problems are selected:
 		setStatusBar('no language problem selected')
 
@@ -222,7 +218,6 @@ def preprocessText(str):
 	# replace all such occurrences with "\n!\n".
 	while "\n\n" in str:
 		str = str.replace("\n\n", "\n!\n")
-
 	return str
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
@@ -244,7 +239,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
 		for match in matches:
-			# category, message, replacements = [child.attrib[x] for x in fields_str]
 			category = match['rule']['category']['name']
 			message = match['message']
 			replacements = [r['value'] for r in match['replacements']]
