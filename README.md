@@ -19,9 +19,9 @@ Open the file you want to proof-read then:
 1. Run a language check (`Ctrl+Shift+c`). Any problems identified by LanguageTool will be highlighted.
 2. Move focus between the problems using `Alt+Down` (next) and `Alt+Up` (previous).
 3. A panel at the bottom will display a brief description  of the highlighted problem and suggest corrections if available.
-4. Begin typing to correct a selected problem or press `Alt+f` to apply the suggested correction.
+4. Begin typing to correct a selected problem or press `Alt+Shift+f` to apply the suggested correction.
 5. To ignore the selected problem, press `Alt+d`.
-6. Auto-correcting a problem (`Alt+f`) or ignoring it (`Alt+d`) will automatically move focus to the next problem.
+6. Auto-correcting a problem (`Alt+Shift+f`) or ignoring it (`Alt+d`) will automatically move focus to the next problem.
 
 All plugin commands and their keyboard shortcuts can be listed in the command palette by typing `LanguageTool:`.
 
