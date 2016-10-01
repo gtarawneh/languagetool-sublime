@@ -211,15 +211,6 @@ def ignoreProblem(p, v, self, edit):
 	# dummy edit to enable undoing ignore
 	v.insert(edit, v.size(), "")
 
-# changes text before submitting it to LanguageTool
-def preprocessText(str):
-	# For some reason LanguageTool (v3.3) returns incorrect problem x/y offsets
-	# for sentences that are preceded by exactly two \n chars. As a walk-around,
-	# replace all such occurrences with "\n!\n".
-	while "\n\n" in str:
-		str = str.replace("\n\n", "\n!\n")
-	return str
-
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
@@ -234,7 +225,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		if checkRegion.empty():
 			checkRegion = sublime.Region(0, v.size())
 		lang = getLanguage(v)
-		matches = LTServer.getResponse(server, preprocessText(strText), lang)
+		matches = LTServer.getResponse(server, strText, lang)
 		if matches == None:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
