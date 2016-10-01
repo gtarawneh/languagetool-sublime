@@ -44,10 +44,7 @@ def selectProblem(v, p):
 	r = v.get_regions(p[5])[0]
 	moveCaret(v, r.a, r.b)
 	v.show_at_center(r)
-	if len(p[4])>0:
-		showProblem(p[3], p[4])
-	else:
-		showProblem(p[3])
+	showProblem(p[3], p[4], p[7])
 	printProblem(p)
 
 def problemSolved(v, p):
@@ -61,22 +58,23 @@ def problemSolved(v, p):
 	# 2. its contents have been changed
 	return r.empty() or (v.substr(r) != p[6])
 
-def showProblem(msg, replacements = None):
+def showProblem(msg, replacements = [], urls = []):
 	global displayMode
 	if displayMode == 'panel':
-		showProblemPanel(msg, replacements)
+		showProblemPanel(msg, replacements, urls)
 	else:
 		showProblemStatusBar(msg, replacements)
 
-def showProblemPanel(msg, replacements = None):
-	if replacements is None:
-		showPanelText(msg);
-	else:
-		replacements2 = ', '.join(replacements)
-		showPanelText("%s\n\nSuggestion(s): %s" % (msg, replacements2));
+def showProblemPanel(msg, replacements, urls):
+	msg2 = msg
+	if replacements:
+		msg2 += '\n\nSuggestion(s): ' + ', '.join(replacements)
+	if urls:
+		msg2 += '\n\nMore Info: ' + '\n'.join(urls)
+	showPanelText(msg2)
 
-def showProblemStatusBar(msg, replacements = None):
-	if replacements is None:
+def showProblemStatusBar(msg, replacements):
+	if replacements == []:
 		str = msg
 	else:
 		str = u"{0} ({1})".format(msg, replacements)
@@ -235,6 +233,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			replacements = [r['value'] for r in match['replacements']]
 			offset = match['offset']
 			length = match['length']
+			urls = [v['value'] for v in match['rule'].get('urls', [])]
 			a = offset
 			b = offset + length
 			region = sublime.Region(a, b)
@@ -242,7 +241,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				regionKey = str(len(problems))
 				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
 				orgContent = v.substr(region)
-				p = (a, b, category, message, replacements, regionKey, orgContent)
+				p = (a, b, category, message, replacements, regionKey, orgContent, urls)
 				problems.append(p)
 				printProblem(p)
 		if len(problems) > 0:
