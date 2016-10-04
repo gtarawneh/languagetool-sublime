@@ -16,9 +16,11 @@ else:
 	from . import LTServer
 	from . import LanguageList
 
-# problems is an array of n-tuples in the form
-# (x0, x1, msg, description, replacements, regionID, orgContent)
+# problems is an array of dictionaries, each being a language problem
 problems = []
+
+# list of ignored rules
+ignored = []
 
 # displayMode determines where problem details are printed
 # supported modes are 'statusbar' or 'panel'
@@ -71,7 +73,6 @@ def showProblemPanel(p):
 		msg += '\n\nSuggestion(s): ' + ', '.join(p['replacements'])
 	if p['urls']:
 		msg += '\n\nMore Info: ' + '\n'.join(p['urls'])
-	msg += '\n\nrule id: ' + p['rule']
 	showPanelText(msg)
 
 def showProblemStatusBar(p):
@@ -210,21 +211,32 @@ def ignoreProblem(p, v, self, edit):
 	# dummy edit to enable undoing ignore
 	v.insert(edit, v.size(), "")
 
+def loadIgnoredRules():
+	settings = sublime.load_settings('LanguageToolUser.sublime-settings')
+	return settings.get('ignored', [])
+
+def saveIgnoredRules(ignored):
+	settings = sublime.load_settings('LanguageToolUser.sublime-settings')
+	settings.set('ignored', ignored)
+	sublime.save_settings('LanguageToolUser.sublime-settings')
+
 class LanguageToolCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		global problems
 		global displayMode
+		global ignored
 		v = self.view
 		clearProblems(v)
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		displayMode = settings.get('display_mode', 'statusbar')
+		ignored = loadIgnoredRules()
 		strText = v.substr(sublime.Region(0, v.size()))
 		checkRegion = v.sel()[0]
 		if checkRegion.empty():
 			checkRegion = sublime.Region(0, v.size())
 		lang = getLanguage(v)
-		matches = LTServer.getResponse(server, strText, lang)
+		matches = LTServer.getResponse(server, strText, lang, ignored)
 		if matches == None:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
@@ -252,6 +264,28 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		else:
 			setStatusBar("no language problems were found :-)")
 
+class DeactivateRuleCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		v = self.view
+		sel = v.sel()[0]
+		selected = [p for p in problems if sel.contains(v.get_regions(p['regionKey'])[0])]
+		if not selected:
+			setStatusBar('select a problem to deactivate its rule')
+		elif len(selected) == 1:
+			global ignored
+			rule = selected[0]['rule']
+			ignored.append(rule)
+			global problems
+			ignoredProblems = [p for p in problems if p['rule'] == rule]
+			for p in ignoredProblems:
+				ignoreProblem(p, v, self, edit)
+			problems = [p for p in problems if p['rule'] != rule]
+			v.run_command("goto_next_language_problem")
+			saveIgnoredRules(ignored)
+			setStatusBar('rule %s deactivated' % rule)
+		else:
+			setStatusBar('there are multiple selected problems; select only one to deactivate')
+
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
 		# buffer text was changed, recompute region highlights
@@ -260,6 +294,6 @@ class LanguageToolListener(sublime_plugin.EventListener):
 def recompHighlights(view):
 	for p in problems:
 		rL = view.get_regions(p['regionKey'])
-		if len(rL) > 0:
+		if rL:
 			regionScope = "" if problemSolved(view, p) else "string"
 			view.add_regions(p['regionKey'], rL, regionScope, "",  sublime.DRAW_OUTLINED)

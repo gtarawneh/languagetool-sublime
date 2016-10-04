@@ -5,8 +5,13 @@ import sys
 import os
 import json
 
-def getResponse(server, text, lang):
-	payload = {'language': lang, 'text': text.encode('utf8'), 'User-Agent': 'sublime'} #, 'disabledRules' : 'EN_A_VS_AN'}
+def getResponse(server, text, lang, ignored):
+	payload = {
+	'language': lang,
+	'text': text.encode('utf8'),
+	'User-Agent': 'sublime',
+	'disabledRules' : ','.join(ignored)
+	}
 	content = _post(server, payload)
 	if content:
 		j = json.loads(content.decode('utf-8'))
