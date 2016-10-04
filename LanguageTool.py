@@ -17,7 +17,7 @@ else:
 	from . import LanguageList
 
 # problems is an array of n-tuples in the form
-# (x0, x1, msg, description, suggestions, regionID, orgContent)
+# (x0, x1, msg, description, replacements, regionID, orgContent)
 problems = []
 
 # displayMode determines where problem details are printed
@@ -36,50 +36,50 @@ def setStatusBar(str):
 def clearProblems(v):
 	global problems
 	for p in problems:
-		v.erase_regions(p[5])
+		v.erase_regions(p['regionKey'])
 	problems = []
 	recompHighlights(v)
 
 def selectProblem(v, p):
-	r = v.get_regions(p[5])[0]
+	r = v.get_regions(p['regionKey'])[0]
 	moveCaret(v, r.a, r.b)
 	v.show_at_center(r)
-	showProblem(p[3], p[4], p[7], p[8])
+	showProblem(p)
 	printProblem(p)
 
 def problemSolved(v, p):
-	rl = v.get_regions(p[5])
+	rl = v.get_regions(p['regionKey'])
 	if len(rl) == 0:
-		print('tried to find non-existing region with key ' + p[5])
+		print('tried to find non-existing region with key ' + p['regionKey'])
 		return True
 	r = rl[0]
 	# a problem is solved when either:
 	# 1. its region has zero length
 	# 2. its contents have been changed
-	return r.empty() or (v.substr(r) != p[6])
+	return r.empty() or (v.substr(r) != p['orgContent'])
 
-def showProblem(msg, replacements = [], urls = [], rule = ''):
+def showProblem(p):
 	global displayMode
 	if displayMode == 'panel':
-		showProblemPanel(msg, replacements, urls, rule)
+		showProblemPanel(p)
 	else:
-		showProblemStatusBar(msg, replacements)
+		showProblemStatusBar(p)
 
-def showProblemPanel(msg, replacements, urls, rule):
-	msg2 = msg
-	if replacements:
-		msg2 += '\n\nSuggestion(s): ' + ', '.join(replacements)
-	if urls:
-		msg2 += '\n\nMore Info: ' + '\n'.join(urls)
-	msg2 += '\n\nrule id: ' + rule
-	showPanelText(msg2)
+def showProblemPanel(p):
+	msg = p['message']
+	if p['replacements']:
+		msg += '\n\nSuggestion(s): ' + ', '.join(p['replacements'])
+	if p['urls']:
+		msg += '\n\nMore Info: ' + '\n'.join(p['urls'])
+	msg += '\n\nrule id: ' + p['rule']
+	showPanelText(msg)
 
-def showProblemStatusBar(msg, replacements):
+def showProblemStatusBar(p):
 	if replacements == []:
-		str = msg
+		msg = msg
 	else:
-		str = u"{0} ({1})".format(msg, replacements)
-	sublime.status_message(str)
+		msg = u"{0} ({1})".format(p['message'], p['replacements'])
+	sublime.status_message(msg)
 
 def showPanelText(str):
 	if (_is_ST2()):
@@ -112,25 +112,25 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 			sel = v.sel()[0]
 			if jumpForward:
 				for p in problems:
-					r = v.get_regions(p[5])[0];
+					r = v.get_regions(p['regionKey'])[0];
 					if (not problemSolved(v, p)) and (sel.begin() < r.a):
 						selectProblem(v, p)
 						return
 			else:
 				for p in reversed(problems):
-					r = v.get_regions(p[5])[0];
+					r = v.get_regions(p['regionKey'])[0];
 					if (not problemSolved(v, p)) and (r.a < sel.begin()):
 						selectProblem(v, p)
 						return
 		setStatusBar("no further language problems to fix")
 		sublime.active_window().run_command("hide_panel", {"panel": "output.languagetool"})
 
-def onSuggestionListSelect(v, p, suggestions, choice):
+def onSuggestionListSelect(v, p, replacements, choice):
 	global problems
 	if choice != -1:
-		r = v.get_regions(p[5])[0]
-		v.run_command('insert', {'characters': suggestions[choice]})
-		c = r.a + len(suggestions[choice])
+		r = v.get_regions(p['regionKey'])[0]
+		v.run_command('insert', {'characters': replacements[choice]})
+		c = r.a + len(replacements[choice])
 		moveCaret(v, c, c) # move caret to end of region
 		v.run_command("goto_next_language_problem")
 	else:
@@ -147,25 +147,25 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 		v = self.view
 		sel = v.sel()[0]
 		for p in problems:
-			r = v.get_regions(p[5])[0]
-			suggestions = p[4]
+			r = v.get_regions(p['regionKey'])[0]
+			replacements = p['replacements']
 			nextCaretPos = r.a;
 			if r == sel:
-				if applyFix and suggestions:
+				if applyFix and replacements:
 					# fix selected problem:
-					if len(suggestions)>1:
-						callbackF = lambda i : onSuggestionListSelect(v, p, suggestions, i)
-						v.window().show_quick_panel(suggestions, callbackF)
+					if len(replacements)>1:
+						callbackF = lambda i : onSuggestionListSelect(v, p, replacements, i)
+						v.window().show_quick_panel(replacements, callbackF)
 						return
 					else:
-						v.replace(edit, r, suggestions[0])
-						nextCaretPos = r.a + len(suggestions[0])
+						v.replace(edit, r, replacements[0])
+						nextCaretPos = r.a + len(replacements[0])
 				else:
 					# ignore problem:
-					if p[2] == "Possible Typo":
+					if p['category'] == "Possible Typo":
 						# if this is a typo then include all identical typos in the
 						# list of problems to be fixed
-						pID = lambda py : (py[2], py[6]) # (msg, orgContent)
+						pID = lambda py : (py['category'], py['orgContent'])
 						ignoreProbs = [px for px in problems if pID(p)==pID(px)]
 					else:
 						# otherwise select just this one problem
@@ -204,9 +204,9 @@ def getLanguage(view):
 
 def ignoreProblem(p, v, self, edit):
 	# change region associated with this problem to a 0-length region
-	r = v.get_regions(p[5])[0]
+	r = v.get_regions(p['regionKey'])[0]
 	dummyRg = sublime.Region(r.a, r.a)
-	v.add_regions(p[5], [dummyRg], "string", "", sublime.DRAW_OUTLINED)
+	v.add_regions(p['regionKey'], [dummyRg], "string", "", sublime.DRAW_OUTLINED)
 	# dummy edit to enable undoing ignore
 	v.insert(edit, v.size(), "")
 
@@ -229,34 +229,28 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
 		for match in matches:
-			category = match['rule']['category']['name']
-			message = match['message']
-			replacements = [r['value'] for r in match['replacements']]
+			problem = {
+			'category': match['rule']['category']['name'],
+			'message': match['message'],
+			'replacements': [r['value'] for r in match['replacements']],
+			'rule' : match['rule']['id'],
+			'urls' : [v['value'] for v in match['rule'].get('urls', [])],
+			}
 			offset = match['offset']
 			length = match['length']
-			rule = match['rule']['id']
-			urls = [v['value'] for v in match['rule'].get('urls', [])]
-			a = offset
-			b = offset + length
-			region = sublime.Region(a, b)
+			region = sublime.Region(offset, offset + length)
 			if checkRegion.contains(region):
 				regionKey = str(len(problems))
 				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
-				orgContent = v.substr(region)
-				p = (a, b, category, message, replacements, regionKey, orgContent, urls, rule)
-				problems.append(p)
-				printProblem(p)
+				problem['orgContent'] = v.substr(region)
+				problem['regionKey'] = regionKey
+				# p = (a, b, category, message, replacements, regionKey, orgContent, urls, rule)
+				problems.append(problem)
+				printProblem(problem)
 		if len(problems) > 0:
 			selectProblem(v, problems[0])
 		else:
 			setStatusBar("no language problems were found :-)")
-
-# used for debugging
-def printProblem(p):
-	return
-	a = str(p[0])
-	b = str(p[1])
-	print("%4s -> %4s : %-10s (%s)" % (a, b, p[6], p[3]))
 
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
@@ -265,7 +259,7 @@ class LanguageToolListener(sublime_plugin.EventListener):
 
 def recompHighlights(view):
 	for p in problems:
-		rL = view.get_regions(p[5])
+		rL = view.get_regions(p['regionKey'])
 		if len(rL) > 0:
 			regionScope = "" if problemSolved(view, p) else "string"
-			view.add_regions(p[5], rL, regionScope, "",  sublime.DRAW_OUTLINED)
+			view.add_regions(p['regionKey'], rL, regionScope, "",  sublime.DRAW_OUTLINED)
