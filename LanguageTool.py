@@ -44,7 +44,7 @@ def selectProblem(v, p):
 	r = v.get_regions(p[5])[0]
 	moveCaret(v, r.a, r.b)
 	v.show_at_center(r)
-	showProblem(p[3], p[4], p[7])
+	showProblem(p[3], p[4], p[7], p[8])
 	printProblem(p)
 
 def problemSolved(v, p):
@@ -58,19 +58,20 @@ def problemSolved(v, p):
 	# 2. its contents have been changed
 	return r.empty() or (v.substr(r) != p[6])
 
-def showProblem(msg, replacements = [], urls = []):
+def showProblem(msg, replacements = [], urls = [], rule = ''):
 	global displayMode
 	if displayMode == 'panel':
-		showProblemPanel(msg, replacements, urls)
+		showProblemPanel(msg, replacements, urls, rule)
 	else:
 		showProblemStatusBar(msg, replacements)
 
-def showProblemPanel(msg, replacements, urls):
+def showProblemPanel(msg, replacements, urls, rule):
 	msg2 = msg
 	if replacements:
 		msg2 += '\n\nSuggestion(s): ' + ', '.join(replacements)
 	if urls:
 		msg2 += '\n\nMore Info: ' + '\n'.join(urls)
+	msg2 += '\n\nrule id: ' + rule
 	showPanelText(msg2)
 
 def showProblemStatusBar(msg, replacements):
@@ -233,6 +234,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			replacements = [r['value'] for r in match['replacements']]
 			offset = match['offset']
 			length = match['length']
+			rule = match['rule']['id']
 			urls = [v['value'] for v in match['rule'].get('urls', [])]
 			a = offset
 			b = offset + length
@@ -241,7 +243,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				regionKey = str(len(problems))
 				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
 				orgContent = v.substr(region)
-				p = (a, b, category, message, replacements, regionKey, orgContent, urls)
+				p = (a, b, category, message, replacements, regionKey, orgContent, urls, rule)
 				problems.append(p)
 				printProblem(p)
 		if len(problems) > 0:
