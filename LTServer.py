@@ -5,12 +5,12 @@ import sys
 import os
 import json
 
-def getResponse(server, text, lang, ignored):
+def getResponse(server, text, lang, ignoredIDs):
 	payload = {
 	'language': lang,
 	'text': text.encode('utf8'),
 	'User-Agent': 'sublime',
-	'disabledRules' : ','.join(ignored)
+	'disabledRules' : ','.join(ignoredIDs)
 	}
 	content = _post(server, payload)
 	if content:

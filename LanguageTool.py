@@ -233,7 +233,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			checkRegion = sublime.Region(0, v.size())
 		v.run_command("clear_language_problems")
 		lang = getLanguage(v)
-		matches = LTServer.getResponse(server, strText, lang, ignored)
+		ignoredIDs = [rule['id'] for rule in ignored]
+		matches = LTServer.getResponse(server, strText, lang, ignoredIDs)
 		if matches == None:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
@@ -270,12 +271,15 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
 		if not selected:
 			setStatusBar('select a problem to deactivate its rule')
 		elif len(selected) == 1:
-			rule = selected[0]['rule']
+			rule = {
+			"id" : selected[0]['rule'],
+			"description" : selected[0]['message']
+			}
 			ignored.append(rule)
-			ignoredProblems = [p for p in problems if p['rule'] == rule]
+			ignoredProblems = [p for p in problems if p['rule'] == rule['id']]
 			for p in ignoredProblems:
 				ignoreProblem(p, v, self, edit)
-			problems = [p for p in problems if p['rule'] != rule]
+			problems = [p for p in problems if p['rule'] != rule['id']]
 			v.run_command("goto_next_language_problem")
 			saveIgnoredRules(ignored)
 			setStatusBar('deactivated rule %s' % rule)
@@ -287,7 +291,8 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
 		global ignored
 		if ignored:
 			activate_callback_wrapper = lambda i : self.activate_callback(i)
-			self.view.window().show_quick_panel(ignored, activate_callback_wrapper)
+			ruleList = [[rule['id'], rule['description']] for rule in ignored]
+			self.view.window().show_quick_panel(ruleList, activate_callback_wrapper)
 		else:
 			setStatusBar('there are no ignored rules')
 
@@ -295,9 +300,9 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
 		global ignored
 		if i != -1:
 			activate_rule = ignored[i]
-			ignored = [rule for rule in ignored if rule != activate_rule]
+			ignored.remove(activate_rule)
 			saveIgnoredRules(ignored)
-			setStatusBar('activated rule %s' % activate_rule)
+			setStatusBar('activated rule %s' % activate_rule['id'])
 
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
