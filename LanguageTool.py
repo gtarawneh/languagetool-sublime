@@ -115,17 +115,6 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 		setStatusBar("no further language problems to fix")
 		sublime.active_window().run_command("hide_panel", {"panel": "output.languagetool"})
 
-def onSuggestionListSelect(v, p, replacements, choice):
-	global problems
-	if choice != -1:
-		r = v.get_regions(p['regionKey'])[0]
-		v.run_command('insert', {'characters': replacements[choice]})
-		c = r.a + len(replacements[choice])
-		moveCaret(v, c, c) # move caret to end of region
-		v.run_command("goto_next_language_problem")
-	else:
-		selectProblem(v, p)
-
 class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		v = self.view
@@ -152,7 +141,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 				if applyFix and replacements:
 					# fix selected problem:
 					if len(replacements)>1:
-						callbackF = lambda i : onSuggestionListSelect(v, p, replacements, i)
+						callbackF = lambda i : self.onSuggestionListSelect(v, p, replacements, i)
 						v.window().show_quick_panel(replacements, callbackF)
 						return
 					else:
@@ -176,6 +165,17 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 				return
 		# if no problems are selected:
 		setStatusBar('no language problem selected')
+
+	def onSuggestionListSelect(self, v, p, replacements, choice):
+		global problems
+		if choice != -1:
+			r = v.get_regions(p['regionKey'])[0]
+			v.run_command('insert', {'characters': replacements[choice]})
+			c = r.a + len(replacements[choice])
+			moveCaret(v, c, c) # move caret to end of region
+			v.run_command("goto_next_language_problem")
+		else:
+			selectProblem(v, p)
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
