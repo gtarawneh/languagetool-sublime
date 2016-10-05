@@ -35,13 +35,6 @@ def moveCaret(view, i, j):
 def setStatusBar(str):
 	sublime.status_message(str)
 
-def clearProblems(v):
-	global problems
-	for p in problems:
-		v.erase_regions(p['regionKey'])
-	problems = []
-	recompHighlights(v)
-
 def selectProblem(v, p):
 	r = v.get_regions(p['regionKey'])[0]
 	moveCaret(v, r.a, r.b)
@@ -82,18 +75,15 @@ def showProblemStatusBar(p):
 	sublime.status_message(msg)
 
 def showPanelText(str):
-	if (_is_ST2()):
-		showPanelTextST2(str)
+	if _is_ST2():
+		window = sublime.active_window();
+		pt = window.get_output_panel("languagetool")
+		pt.set_read_only(False)
+		edit = pt.begin_edit()
+		pt.insert(edit, pt.size(), str)
+		window.run_command("show_panel", {"panel": "output.languagetool"})
 	else:
 		sublime.active_window().run_command('set_language_tool_panel_text', {'str': str})
-
-def showPanelTextST2(str):
-	window = sublime.active_window();
-	pt = window.get_output_panel("languagetool")
-	pt.set_read_only(False)
-	edit = pt.begin_edit()
-	pt.insert(edit, pt.size(), str)
-	window.run_command("show_panel", {"panel": "output.languagetool"})
 
 class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
 	def run(self, edit, str):
@@ -138,7 +128,12 @@ def onSuggestionListSelect(v, p, replacements, choice):
 
 class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		clearProblems(self.view)
+		v = self.view
+		global problems
+		for p in problems:
+			v.erase_regions(p['regionKey'])
+		problems = []
+		recompHighlights(v)
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
@@ -224,7 +219,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		global displayMode
 		global ignored
 		v = self.view
-		clearProblems(v)
+		v.run_command("clear_language_problems")
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		displayMode = settings.get('display_mode', 'statusbar')
