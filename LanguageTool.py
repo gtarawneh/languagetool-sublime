@@ -293,11 +293,11 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
 
 	def activate_callback(self, i):
 		global ignored
-		print(i)
-		activate_rule = ignored[i]
-		ignored = [rule for rule in ignored if rule != activate_rule]
-		saveIgnoredRules(ignored)
-		setStatusBar('activated rule %s' % rule)
+		if i != -1:
+			activate_rule = ignored[i]
+			ignored = [rule for rule in ignored if rule != activate_rule]
+			saveIgnoredRules(ignored)
+			setStatusBar('activated rule %s' % activate_rule)
 
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
