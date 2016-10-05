@@ -278,9 +278,26 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
 			problems = [p for p in problems if p['rule'] != rule]
 			v.run_command("goto_next_language_problem")
 			saveIgnoredRules(ignored)
-			setStatusBar('rule %s deactivated' % rule)
+			setStatusBar('deactivated rule %s' % rule)
 		else:
 			setStatusBar('there are multiple selected problems; select only one to deactivate')
+
+class ActivateRuleCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		global ignored
+		if ignored:
+			activate_callback_wrapper = lambda i : self.activate_callback(i)
+			self.view.window().show_quick_panel(ignored, activate_callback_wrapper)
+		else:
+			setStatusBar('there are no ignored rules')
+
+	def activate_callback(self, i):
+		global ignored
+		print(i)
+		activate_rule = ignored[i]
+		ignored = [rule for rule in ignored if rule != activate_rule]
+		saveIgnoredRules(ignored)
+		setStatusBar('activated rule %s' % rule)
 
 class LanguageToolListener(sublime_plugin.EventListener):
 	def on_modified(self, view):
