@@ -134,6 +134,10 @@ class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 			v.erase_regions(p['regionKey'])
 		problems = []
 		recompHighlights(v)
+		caretPos = self.view.sel()[0].end()
+		v.sel().clear()
+		sublime.active_window().run_command("hide_panel", {"panel": "output.languagetool"})
+		moveCaret(v, caretPos, caretPos)
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 	def run(self, edit, applyFix):
@@ -219,7 +223,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		global displayMode
 		global ignored
 		v = self.view
-		v.run_command("clear_language_problems")
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
 		displayMode = settings.get('display_mode', 'statusbar')
@@ -228,6 +231,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		checkRegion = v.sel()[0]
 		if checkRegion.empty():
 			checkRegion = sublime.Region(0, v.size())
+		v.run_command("clear_language_problems")
 		lang = getLanguage(v)
 		matches = LTServer.getResponse(server, strText, lang, ignored)
 		if matches == None:
@@ -251,7 +255,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				problem['regionKey'] = regionKey
 				# p = (a, b, category, message, replacements, regionKey, orgContent, urls, rule)
 				problems.append(problem)
-		if len(problems) > 0:
+		if problems:
 			selectProblem(v, problems[0])
 		else:
 			setStatusBar("no language problems were found :-)")
