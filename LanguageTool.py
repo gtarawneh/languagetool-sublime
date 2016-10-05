@@ -68,10 +68,10 @@ def showProblemPanel(p):
 	showPanelText(msg)
 
 def showProblemStatusBar(p):
-	if replacements == []:
-		msg = msg
-	else:
+	if p['replacements']:
 		msg = u"{0} ({1})".format(p['message'], p['replacements'])
+	else:
+		msg = p['message']
 	sublime.status_message(msg)
 
 def showPanelText(str):
