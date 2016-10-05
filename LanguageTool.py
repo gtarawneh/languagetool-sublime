@@ -47,7 +47,6 @@ def selectProblem(v, p):
 	moveCaret(v, r.a, r.b)
 	v.show_at_center(r)
 	showProblem(p)
-	printProblem(p)
 
 def problemSolved(v, p):
 	rl = v.get_regions(p['regionKey'])
@@ -139,7 +138,6 @@ def onSuggestionListSelect(v, p, replacements, choice):
 
 class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		global problemSolved
 		clearProblems(self.view)
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
@@ -258,7 +256,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				problem['regionKey'] = regionKey
 				# p = (a, b, category, message, replacements, regionKey, orgContent, urls, rule)
 				problems.append(problem)
-				printProblem(problem)
 		if len(problems) > 0:
 			selectProblem(v, problems[0])
 		else:
@@ -266,16 +263,16 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
 class DeactivateRuleCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
+		global problems
+		global ignored
 		v = self.view
 		sel = v.sel()[0]
 		selected = [p for p in problems if sel.contains(v.get_regions(p['regionKey'])[0])]
 		if not selected:
 			setStatusBar('select a problem to deactivate its rule')
 		elif len(selected) == 1:
-			global ignored
 			rule = selected[0]['rule']
 			ignored.append(rule)
-			global problems
 			ignoredProblems = [p for p in problems if p['rule'] == rule]
 			for p in ignoredProblems:
 				ignoreProblem(p, v, self, edit)
@@ -292,6 +289,7 @@ class LanguageToolListener(sublime_plugin.EventListener):
 		recompHighlights(view)
 
 def recompHighlights(view):
+	global problems
 	for p in problems:
 		rL = view.get_regions(p['regionKey'])
 		if rL:
