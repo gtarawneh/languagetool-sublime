@@ -5,6 +5,7 @@
 
 import sublime
 import sublime_plugin
+import subprocess
 
 def _is_ST2():
 	return (int(sublime.version()) < 3000)
@@ -176,6 +177,16 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 			v.run_command("goto_next_language_problem")
 		else:
 			selectProblem(v, p)
+
+class startLanguageToolServerCommand(sublime_plugin.TextCommand):
+	# sublime.active_window().active_view().run_command('start_language_tool_server')
+	def run(self, edit):
+		jarPath = 'C:\\bin\\LanguageTool-3.4\\languagetool.jar'
+		cmd = ['java', '-jar', jarPath, '-t']
+		if sublime.platform() == "windows":
+			p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, creationflags=subprocess.SW_HIDE)
+		else:
+			p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
