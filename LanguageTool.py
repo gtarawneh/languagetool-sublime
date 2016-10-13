@@ -6,6 +6,7 @@
 import sublime
 import sublime_plugin
 import subprocess
+import os.path
 
 def _is_ST2():
 	return (int(sublime.version()) < 3000)
@@ -181,12 +182,18 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 class startLanguageToolServerCommand(sublime_plugin.TextCommand):
 	# sublime.active_window().active_view().run_command('start_language_tool_server')
 	def run(self, edit):
-		jarPath = 'C:\\bin\\LanguageTool-3.4\\languagetool.jar'
-		cmd = ['java', '-jar', jarPath, '-t']
-		if sublime.platform() == "windows":
-			p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, creationflags=subprocess.SW_HIDE)
-		else:
-			p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		settings = sublime.load_settings("LanguageTool.sublime-settings")
+		jarPath = settings.get('languagetool_jar')
+		if jarPath:
+			if os.path.isfile(jarPath):
+				sublime.status_message('Starting local LanguageTool server ...')
+				cmd = ['java', '-jar', jarPath, '-t']
+				if sublime.platform() == "windows":
+					p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, creationflags=subprocess.SW_HIDE)
+				else:
+					p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			else:
+				showPanelText('Error, could not find LanguageTool\'s JAR file (%s)\n\nPlease install LT in this directory or modify the `languagetool_jar` setting.' % jarPath)
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

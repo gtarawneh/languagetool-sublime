@@ -38,5 +38,9 @@
 	{
 		"caption": "LanguageTool: Activate Rule",
 		"command": "activate_rule"
+	},
+	{
+		"caption": "LanguageTool: Start Local Server",
+		"command": "start_language_tool_server"
 	}
 ]
