@@ -4,6 +4,16 @@
 		"command": "language_tool"
 	},
 	{
+		"caption": "LanguageTool: Check Text (Local Server)",
+		"command": "language_tool",
+		"args": {"forceServer": "local"}
+	},
+	{
+		"caption": "LanguageTool: Check Text (Remote Server)",
+		"command": "language_tool",
+		"args": {"forceServer": "remote"}
+	},
+	{
 		"caption": "LanguageTool: Next Problem",
 		"command": "goto_next_language_problem",
 		"args": {"jumpForward": true}

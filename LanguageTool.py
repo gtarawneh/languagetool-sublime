@@ -235,14 +235,34 @@ def saveIgnoredRules(ignored):
 	settings.set('ignored', ignored)
 	sublime.save_settings('LanguageToolUser.sublime-settings')
 
+def getServer(settings, forceServer):
+	# returns server url based on the setting `default_server`
+	#
+	# If `default_server` is `local` then return the server defined in
+	# `language_server_local` (defaults to 'http://localhost:8081/v2/check').
+	#
+	# If `default_server` is `remote` then return the server defined in
+	# `language_server_remote` (defaults to 'https://languagetool.org/api/v2/check').
+	#
+	# if `default_server` is anything else then treat as `remote`
+	#
+	if forceServer is None:
+		forceServer = settings.get('default_server', 'remote')
+	if forceServer == "local":
+		server = settings.get('languagetool_server_local', 'http://localhost:8081/v2/check')
+	else:
+		server = settings.get('languagetool_server', 'https://languagetool.org/api/v2/check')
+	print(server)
+	return server
+
 class LanguageToolCommand(sublime_plugin.TextCommand):
-	def run(self, edit):
+	def run(self, edit, forceServer = None):
 		global problems
 		global displayMode
 		global ignored
 		v = self.view
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
-		server = settings.get('languagetool_server', 'https://languagetool.org:8081/')
+		server = getServer(settings, forceServer)
 		displayMode = settings.get('display_mode', 'statusbar')
 		ignored = loadIgnoredRules()
 		strText = v.substr(sublime.Region(0, v.size()))

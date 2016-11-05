@@ -1,6 +1,7 @@
 {
-	"languagetool_server": "https://languagetool.org/api/v2/check" // limited to 20 calls per minute
-	// "languagetool_server": "http://localhost:8081/v2/check" // local server
-	,"display_mode": "panel"
-	,"languagetool_jar": "C:\\bin\\LanguageTool-3.5\\languagetool.jar"
+  "languagetool_server_remote": "https://languagetool.org/api/v2/check",
+  "languagetool_server_local": "http://localhost:8081/v2/check",
+  "default_server": "remote",
+  "display_mode": "panel",
+  "languagetool_jar": "C:\\bin\\LanguageTool-3.5\\languagetool.jar"
 }
