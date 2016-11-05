@@ -91,6 +91,8 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
 	def run(self, edit, str):
 		window = sublime.active_window();
 		pt = window.get_output_panel("languagetool")
+		pt.settings().set("wrap_width", 0)
+		pt.settings().set("word_wrap", True)
 		pt.set_read_only(False)
 		pt.insert(edit, pt.size(), str)
 		window.run_command("show_panel", {"panel": "output.languagetool"})
@@ -252,7 +254,6 @@ def getServer(settings, forceServer):
 		server = settings.get('languagetool_server_local', 'http://localhost:8081/v2/check')
 	else:
 		server = settings.get('languagetool_server', 'https://languagetool.org/api/v2/check')
-	print(server)
 	return server
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
