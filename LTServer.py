@@ -1,5 +1,10 @@
 import sublime
-import urllib
+try:
+    from urlparse import urlencode
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
 
 import sys
 import os
@@ -31,19 +36,19 @@ def _post(server, payload):
 		return _post_ST3(server, payload)
 
 def _post_ST2(server, payload):
-	data = urllib.urlencode(payload)
+	data = urlencode(payload)
 	try:
-		content = urllib.urlopen(server, data).read()
+		content = urlopen(server, data).read()
 	except IOError:
 		return None
 	else:
 		return content
 
 def _post_ST3(server, payload):
-	data = urllib.parse.urlencode(payload)
+	data = urlencode(payload)
 	data = data.encode('utf8')
 	try:
-		content = urllib.request.urlopen(server, data).read()
+		content = urlopen(server, data).read()
 	except IOError:
 		return None
 	else:
