@@ -1,14 +1,17 @@
 import sublime
-try:
-    from urlparse import urlencode
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
-
 import sys
 import os
 import json
+
+def _is_ST2():
+	return (int(sublime.version()) < 3000)
+
+if _is_ST2():
+	from urllib import urlencode
+	from urllib import urlopen
+else:
+	from urlparse import urlencode
+	from urllib2 import urlopen
 
 def getResponse(server, text, lang, ignoredIDs):
 	payload = {
@@ -25,9 +28,6 @@ def getResponse(server, text, lang, ignoredIDs):
 		return None
 
 # internal functions:
-
-def _is_ST2():
-	return (int(sublime.version()) < 3000)
 
 def _post(server, payload):
 	if _is_ST2():
