@@ -283,7 +283,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			'message': match['message'],
 			'replacements': [r['value'] for r in match['replacements']],
 			'rule' : match['rule']['id'],
-			'urls' : [v['value'] for v in match['rule'].get('urls', [])],
+			'urls' : [w['value'] for w in match['rule'].get('urls', [])],
 			}
 			offset = match['offset']
 			length = match['length']
