@@ -274,16 +274,16 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		lang = getLanguage(v)
 		ignoredIDs = [rule['id'] for rule in ignored]
 		matches = LTServer.getResponse(server, strText, lang, ignoredIDs)
-		if matches == None:
+		if not matches:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
 		for match in matches:
 			problem = {
-			'category': match['rule']['category']['name'],
-			'message': match['message'],
-			'replacements': [r['value'] for r in match['replacements']],
-			'rule' : match['rule']['id'],
-			'urls' : [w['value'] for w in match['rule'].get('urls', [])],
+				'category': match['rule']['category']['name'],
+				'message': match['message'],
+				'replacements': [r['value'] for r in match['replacements']],
+				'rule' : match['rule']['id'],
+				'urls' : [w['value'] for w in match['rule'].get('urls', [])],
 			}
 			offset = match['offset']
 			length = match['length']
@@ -293,7 +293,6 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
 				problem['orgContent'] = v.substr(region)
 				problem['regionKey'] = regionKey
-				# p = (a, b, category, message, replacements, regionKey, orgContent, urls, rule)
 				problems.append(problem)
 		if problems:
 			selectProblem(v, problems[0])
@@ -311,8 +310,8 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
 			setStatusBar('select a problem to deactivate its rule')
 		elif len(selected) == 1:
 			rule = {
-			"id" : selected[0]['rule'],
-			"description" : selected[0]['message']
+				"id" : selected[0]['rule'],
+				"description" : selected[0]['message']
 			}
 			ignored.append(rule)
 			ignoredProblems = [p for p in problems if p['rule'] == rule['id']]

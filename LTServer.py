@@ -1,6 +1,4 @@
 import sublime
-import sys
-import os
 import json
 
 def _is_ST2():
@@ -13,12 +11,12 @@ else:
 	from urlparse import urlencode
 	from urllib2 import urlopen
 
-def getResponse(server, text, lang, ignoredIDs):
+def getResponse(server, text, language, disabledRules):
 	payload = {
-	'language': lang,
-	'text': text.encode('utf8'),
-	'User-Agent': 'sublime',
-	'disabledRules' : ','.join(ignoredIDs)
+		'language': language,
+		'text': text.encode('utf8'),
+		'User-Agent': 'sublime',
+		'disabledRules' : ','.join(disabledRules)
 	}
 	content = _post(server, payload)
 	if content:
@@ -30,26 +28,9 @@ def getResponse(server, text, lang, ignoredIDs):
 # internal functions:
 
 def _post(server, payload):
-	if _is_ST2():
-		return _post_ST2(server, payload)
-	else:
-		return _post_ST3(server, payload)
-
-def _post_ST2(server, payload):
-	data = urlencode(payload)
+	data = urlencode(payload).encode('utf8')
 	try:
 		content = urlopen(server, data).read()
+		return content
 	except IOError:
 		return None
-	else:
-		return content
-
-def _post_ST3(server, payload):
-	data = urlencode(payload)
-	data = data.encode('utf8')
-	try:
-		content = urlopen(server, data).read()
-	except IOError:
-		return None
-	else:
-		return content
