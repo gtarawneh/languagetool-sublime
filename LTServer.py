@@ -8,8 +8,12 @@ if _is_ST2():
 	from urllib import urlencode
 	from urllib import urlopen
 else:
-	from urlparse import urlencode
-	from urllib2 import urlopen
+	try:
+		from urlparse import urlencode
+		from urllib2 import urlopen
+	except ImportError:
+		from urllib.parse import urlencode
+		from urllib.request import urlopen
 
 def getResponse(server, text, language, disabledRules):
 	payload = {
