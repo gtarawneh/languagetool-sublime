@@ -274,7 +274,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		lang = getLanguage(v)
 		ignoredIDs = [rule['id'] for rule in ignored]
 		matches = LTServer.getResponse(server, strText, lang, ignoredIDs)
-		if not matches:
+		if matches == None:
 			setStatusBar('could not parse server response (may be due to quota if using http://languagetool.org)')
 			return
 		for match in matches:
