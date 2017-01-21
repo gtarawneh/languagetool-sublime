@@ -24,6 +24,9 @@ problems = []
 # list of ignored rules
 ignored = []
 
+# highlight scope
+hscope = "comment"
+
 # displayMode determines where problem details are printed
 # supported modes are 'statusbar' or 'panel'
 displayMode = 'statusbar';
@@ -224,7 +227,7 @@ def ignoreProblem(p, v, self, edit):
 	# change region associated with this problem to a 0-length region
 	r = v.get_regions(p['regionKey'])[0]
 	dummyRg = sublime.Region(r.a, r.a)
-	v.add_regions(p['regionKey'], [dummyRg], "string", "", sublime.DRAW_OUTLINED)
+	v.add_regions(p['regionKey'], [dummyRg], hscope, "", sublime.DRAW_OUTLINED)
 	# dummy edit to enable undoing ignore
 	v.insert(edit, v.size(), "")
 
@@ -261,10 +264,12 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		global problems
 		global displayMode
 		global ignored
+		global hscope
 		v = self.view
 		settings = sublime.load_settings("LanguageTool.sublime-settings")
 		server = getServer(settings, forceServer)
 		displayMode = settings.get('display_mode', 'statusbar')
+		hscope = settings.get("highlight-scope", "comment")
 		ignored = loadIgnoredRules()
 		strText = v.substr(sublime.Region(0, v.size()))
 		checkRegion = v.sel()[0]
@@ -290,7 +295,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			region = sublime.Region(offset, offset + length)
 			if checkRegion.contains(region):
 				regionKey = str(len(problems))
-				v.add_regions(regionKey, [region], "string", "", sublime.DRAW_OUTLINED)
+				v.add_regions(regionKey, [region], hscope, "", sublime.DRAW_OUTLINED)
 				problem['orgContent'] = v.substr(region)
 				problem['regionKey'] = regionKey
 				problems.append(problem)
@@ -352,5 +357,5 @@ def recompHighlights(view):
 	for p in problems:
 		rL = view.get_regions(p['regionKey'])
 		if rL:
-			regionScope = "" if problemSolved(view, p) else "string"
+			regionScope = "" if problemSolved(view, p) else hscope
 			view.add_regions(p['regionKey'], rL, regionScope, "",  sublime.DRAW_OUTLINED)
