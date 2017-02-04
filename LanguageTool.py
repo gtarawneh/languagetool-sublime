@@ -7,6 +7,7 @@ import sublime
 import sublime_plugin
 import subprocess
 import os.path
+import fnmatch
 
 def _is_ST2():
 	return (int(sublime.version()) < 3000)
@@ -293,7 +294,23 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			offset = match['offset']
 			length = match['length']
 			region = sublime.Region(offset, offset + length)
-			if checkRegion.contains(region):
+			if not checkRegion.contains(region):
+				continue
+			ignored_scopes = [
+				"support.function.*.latex",
+				"meta.*",
+				"comment.*",
+				"keyword.control.tex",
+			]
+			# view.scope_name() returns a string of space-separated scope names
+			# (ending with a space)
+			pscopes = v.scope_name(region.a).split(' ')[0:-1]
+			for ps in pscopes:
+				if any([fnmatch.fnmatch(ps, i) for i in ignored_scopes]):
+					ignored = True
+					break
+			else:
+				# none of this region's scopes are ignored
 				regionKey = str(len(problems))
 				v.add_regions(regionKey, [region], hscope, "", sublime.DRAW_OUTLINED)
 				problem['orgContent'] = v.substr(region)
