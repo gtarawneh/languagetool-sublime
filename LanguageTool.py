@@ -298,8 +298,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 				continue
 			ignored_scopes = [
 				"support.function.*.latex",
-				"meta.*",
-				"comment.*",
+				"meta.*.latex",
+				"comment.*.tex",
 				"keyword.control.tex",
 			]
 			# view.scope_name() returns a string of space-separated scope names
