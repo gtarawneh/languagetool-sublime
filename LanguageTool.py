@@ -296,12 +296,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 			region = sublime.Region(offset, offset + length)
 			if not checkRegion.contains(region):
 				continue
-			ignored_scopes = [
-				"support.function.*.latex",
-				"meta.*.latex",
-				"comment.*.tex",
-				"keyword.control.tex",
-			]
+			ignored_scopes = settings.get('ignored-scopes', [])
 			# view.scope_name() returns a string of space-separated scope names
 			# (ending with a space)
 			pscopes = v.scope_name(region.a).split(' ')[0:-1]
