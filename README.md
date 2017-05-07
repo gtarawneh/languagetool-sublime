@@ -1,10 +1,14 @@
 #### Brief Summary
 
-This is a simple adapter to integrate [LanguageTool](https://languagetool.org/) (an open source proof-reading program) into Sublime Text 2/3.
+This is a simple adapter to integrate
+[LanguageTool](https://languagetool.org/) (an open source proof-reading
+program) into Sublime Text 2/3.
 
 From https://www.languagetool.org/:
 
-> LanguageTool is an Open Source proof­reading program for English, French, German, Polish, and more than 20 other languages. It finds many errors that a simple spell checker cannot detect and several grammar problems.
+> LanguageTool is an Open Source proof­reading program for English, French,
+> German, Polish, and more than 20 other languages. It finds many errors that
+> a simple spell checker cannot detect and several grammar problems.
 
 ![](https://cdn.rawgit.com/gtarawneh/languagetool-sublime/master/demo.gif)
 
@@ -54,8 +58,8 @@ LanguageTool server](http://wiki.languagetool.org/http-server).
 
 #### License
 
-This plugin is freely available under [GPLv2](https://www.gnu.org/licenses
-/old-licenses/gpl-2.0.html) or later.
+This plugin is freely available under
+[GPLv2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html) or later.
 
 #### Contributing
 
