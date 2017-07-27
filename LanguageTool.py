@@ -261,7 +261,7 @@ def getServer(settings, forceServer):
 	if forceServer == "local":
 		server = settings.get('languagetool_server_local', 'http://localhost:8081/v2/check')
 	else:
-		server = settings.get('languagetool_server', 'https://languagetool.org/api/v2/check')
+		server = settings.get('languagetool_server_remote', 'https://languagetool.org/api/v2/check')
 	return server
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
