@@ -32,6 +32,10 @@ hscope = "comment"
 # supported modes are 'statusbar' or 'panel'
 displayMode = 'statusbar';
 
+# global constants
+lt_user_settings_file = 'LanguageToolUser.sublime-settings'
+lt_settings_file      ='LanguageTool.sublime-settings'
+
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
 	target = view.text_point(0, i)
@@ -188,7 +192,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
 class startLanguageToolServerCommand(sublime_plugin.TextCommand):
 	# sublime.active_window().active_view().run_command('start_language_tool_server')
 	def run(self, edit):
-		settings = sublime.load_settings("LanguageTool.sublime-settings")
+		settings = sublime.load_settings(lt_settings_file)
 		jarPath = settings.get('languagetool_jar')
 		if jarPath:
 			if os.path.isfile(jarPath):
@@ -233,13 +237,13 @@ def ignoreProblem(p, v, self, edit):
 	v.insert(edit, v.size(), "")
 
 def loadIgnoredRules():
-	settings = sublime.load_settings('LanguageToolUser.sublime-settings')
+	settings = sublime.load_settings(lt_user_settings_file)
 	return settings.get('ignored', [])
 
 def saveIgnoredRules(ignored):
-	settings = sublime.load_settings('LanguageToolUser.sublime-settings')
+	settings = sublime.load_settings(lt_user_settings_file)
 	settings.set('ignored', ignored)
-	sublime.save_settings('LanguageToolUser.sublime-settings')
+	sublime.save_settings(lt_user_settings_file)
 
 def getServer(settings, forceServer):
 	# returns server url based on the setting `default_server`
@@ -267,7 +271,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 		global ignored
 		global hscope
 		v = self.view
-		settings = sublime.load_settings("LanguageTool.sublime-settings")
+		settings = sublime.load_settings(lt_settings_file)
 		server = getServer(settings, forceServer)
 		displayMode = settings.get('display_mode', 'statusbar')
 		hscope = settings.get("highlight-scope", "comment")
