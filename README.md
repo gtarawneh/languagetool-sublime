@@ -1,4 +1,6 @@
-#### Brief Summary
+### LanguageTool for Sublime Text 2/3
+
+#### Overview
 
 This is a simple adapter to integrate
 [LanguageTool](https://languagetool.org/) (an open source proof-reading
@@ -43,9 +45,9 @@ There are two server settings (local and remote) that can be configured and
 one must be selected as default (although command palette variants of `Check
 Text` can be used to check text via a specific server).
 
-The remote server is initially configured (in the file `LanguageTool.sublime-
-settings`) as `https://languagetool.org:8081/`. There are few limitations on
-checking texts using this public server including:
+The remote server is initially configured (in the file
+`LanguageTool.sublime-settings`) as `https://languagetool.org:8081/`. There
+are few limitations on checking texts using this public server including:
 
 1. Maximum text size of 50Kb
 2. Access limited to 20 requests/minute per IP
