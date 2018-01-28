@@ -38,25 +38,45 @@ Open the file you want to proof-read then:
 All commands and their keyboard shortcuts are in the command palette with the
 prefix `LanguageTool:`.
 
-#### Server Configuration
+#### Configuration
 
-The adapter POSTs the text to be checked to a LanguageTool server via https.
-There are two server settings (local and remote) that can be configured and
-one must be selected as default (although command palette variants of `Check
-Text` can be used to check text via a specific server).
+The settings file for the plugin can be opened from the `Preferences` menu
+(`Preferences` &rarr; `Package Settings` &rarr; `LanguageTool` &rarr;
+`Settings - User`). Default settings are in the corresponding submenu item
+`Settings - Default`. Note that default settings are provided for reference
+and should not be edited as they may be overwritten when the plugin is updated
+or reinstalled. Instead, copy and modify any settings you wish to override to
+`Settings - User`.
 
-The remote server is initially configured (in the file
-`LanguageTool.sublime-settings`) as `https://languagetool.org:8081/`. There
-are few limitations on checking texts using this public server including:
+#### Local vs. Remote Checking
+
+The adapter supports local and remote LanguageTool servers. Remote checking is
+the default and works by submitting text over https to an api endpoint on
+https://languagetool.org (this can be changed in plugin settings). This public
+service is subject to usage constraints including:
 
 1. Maximum text size of 50Kb
 2. Access limited to 20 requests/minute per IP
 
 (See http://wiki.languagetool.org/public-http-api for full details.)
 
-For better performance and to check texts without the above limitations you
-can download LanguageTool then run and configure the adapter to use [your own
-LanguageTool server](http://wiki.languagetool.org/http-server).
+Instead of using the public (remote) LanguageTool service, text can be checked
+using a local LanguageTool Installation. A local LanguageTool server can be
+started by the plugin itself using the command `LanguageTool: Start Local
+Server` (this requires the settings entry `languagetool_jar` to point to the
+local languagetool JAR file), or from the command line following the
+instructions in http://wiki.languagetool.org/http-server.
+
+The settings file contains remote and local server URL entries. A third option
+`default_server` indicates which of these is used when the command
+`LanguageTool: Check Text` is ran. As an added convenience, two more commands:
+
+* `LanguageTool: Check Text (Local Server)`
+* `LanguageTool: Check Text (Remote Server)`
+
+are provided, which can be used to check text using the local/remote servers
+regardless of `default_server`. This can be used for one-off checks when it's
+desirable to use a particular server with certain pieces of text.
 
 #### License
 
