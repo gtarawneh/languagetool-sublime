@@ -34,10 +34,6 @@ hscope = "comment"
 # supported modes are 'statusbar' or 'panel'
 displayMode = 'statusbar'
 
-# global constants
-lt_user_settings_file = 'LanguageToolUser.sublime-settings'
-lt_settings_file = 'LanguageTool.sublime-settings'
-
 
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
@@ -212,12 +208,14 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
         else:
             selectProblem(v, p)
 
+def get_settings():
+    return sublime.load_settings('LanguageTool.sublime-settings')
+
 
 class startLanguageToolServerCommand(sublime_plugin.TextCommand):
     # sublime.active_window().active_view().run_command('start_language_tool_server')
     def run(self, edit):
-        settings = sublime.load_settings(lt_settings_file)
-        jarPath = settings.get('languagetool_jar')
+        jarPath = get_settings().get('languagetool_jar')
         if jarPath:
             if os.path.isfile(jarPath):
                 sublime.status_message(
@@ -280,12 +278,12 @@ def ignoreProblem(p, v, self, edit):
 
 
 def loadIgnoredRules():
-    settings = sublime.load_settings(lt_user_settings_file)
+    settings = sublime.load_settings('LanguageToolUser.sublime-settings')
     return settings.get('ignored', [])
 
 
 def saveIgnoredRules(ignored):
-    settings = sublime.load_settings(lt_user_settings_file)
+    settings = sublime.load_settings('LanguageToolUser.sublime-settings')
     settings.set('ignored', ignored)
     sublime.save_settings(lt_user_settings_file)
 
@@ -301,6 +299,7 @@ def getServer(settings, forceServer):
     #
     # if `default_server` is anything else then treat as `remote`
     #
+    settings = get_settings()
     if forceServer is None:
         forceServer = settings.get('default_server', 'remote')
     if forceServer == "local":
@@ -319,7 +318,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         global ignored
         global hscope
         v = self.view
-        settings = sublime.load_settings(lt_settings_file)
+        settings = get_settings()
         server = getServer(settings, forceServer)
         displayMode = settings.get('display_mode', 'statusbar')
         hscope = settings.get("highlight-scope", "comment")
