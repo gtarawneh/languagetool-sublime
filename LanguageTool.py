@@ -30,10 +30,6 @@ ignored = []
 # highlight scope
 hscope = "comment"
 
-# displayMode determines where problem details are printed
-# supported modes are 'statusbar' or 'panel'
-displayMode = 'statusbar'
-
 
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
@@ -66,11 +62,9 @@ def problemSolved(v, p):
 
 
 def showProblem(p):
-    global displayMode
-    if displayMode == 'panel':
-        showProblemPanel(p)
-    else:
-        showProblemStatusBar(p)
+    use_panel = get_settings().get('display_mode') == 'panel'
+    show_problem = showProblemPanel if use_panel else showProblemStatusBar
+    show_problem(p)
 
 
 def showProblemPanel(p):
@@ -314,13 +308,11 @@ def getServer(settings, forceServer):
 class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, forceServer=None):
         global problems
-        global displayMode
         global ignored
         global hscope
         v = self.view
         settings = get_settings()
         server = getServer(settings, forceServer)
-        displayMode = settings.get('display_mode', 'statusbar')
         hscope = settings.get("highlight-scope", "comment")
         ignored = loadIgnoredRules()
         strText = v.substr(sublime.Region(0, v.size()))
