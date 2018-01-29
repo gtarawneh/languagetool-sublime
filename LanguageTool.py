@@ -24,9 +24,6 @@ else:
 # problems is an array of dictionaries, each being a language problem
 problems = []
 
-# list of ignored rules
-ignored = []
-
 # highlight scope
 hscope = "comment"
 
@@ -271,15 +268,17 @@ def ignoreProblem(p, v, self, edit):
     v.insert(edit, v.size(), "")
 
 
-def loadIgnoredRules():
-    settings = sublime.load_settings('LanguageToolUser.sublime-settings')
+def load_ignored_rules():
+    ignored_rules_file = 'LanguageToolUser.sublime-settings'
+    settings = sublime.load_settings(ignored_rules_file)
     return settings.get('ignored', [])
 
 
-def saveIgnoredRules(ignored):
-    settings = sublime.load_settings('LanguageToolUser.sublime-settings')
+def save_ignored_rules(ignored):
+    ignored_rules_file = 'LanguageToolUser.sublime-settings'
+    settings = sublime.load_settings(ignored_rules_file)
     settings.set('ignored', ignored)
-    sublime.save_settings(lt_user_settings_file)
+    sublime.save_settings(ignored_rules_file)
 
 
 def getServer(settings, forceServer):
@@ -308,13 +307,12 @@ def getServer(settings, forceServer):
 class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, forceServer=None):
         global problems
-        global ignored
         global hscope
         v = self.view
         settings = get_settings()
         server = getServer(settings, forceServer)
         hscope = settings.get("highlight-scope", "comment")
-        ignored = loadIgnoredRules()
+        ignored = load_ignored_rules()
         strText = v.substr(sublime.Region(0, v.size()))
         checkRegion = v.sel()[0]
         if checkRegion.empty():
@@ -366,7 +364,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 class DeactivateRuleCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         global problems
-        global ignored
+        ignored = load_ignored_rules()
         v = self.view
         sel = v.sel()[0]
         selected = [
@@ -386,7 +384,7 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
                 ignoreProblem(p, v, self, edit)
             problems = [p for p in problems if p['rule'] != rule['id']]
             v.run_command("goto_next_language_problem")
-            saveIgnoredRules(ignored)
+            save_ignored_rules(ignored)
             setStatusBar('deactivated rule %s' % rule)
         else:
             setStatusBar(
@@ -410,7 +408,7 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
         if i != -1:
             activate_rule = ignored[i]
             ignored.remove(activate_rule)
-            saveIgnoredRules(ignored)
+            save_ignored_rules(ignored)
             setStatusBar('activated rule %s' % activate_rule['id'])
 
 
