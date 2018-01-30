@@ -24,9 +24,6 @@ else:
 # problems is an array of dictionaries, each being a language problem
 problems = []
 
-# highlight scope
-hscope = "comment"
-
 
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
@@ -263,6 +260,7 @@ def ignoreProblem(p, v, self, edit):
     # change region associated with this problem to a 0-length region
     r = v.get_regions(p['regionKey'])[0]
     dummyRg = sublime.Region(r.a, r.a)
+    hscope = get_settings().get("highlight-scope", "comment")
     v.add_regions(p['regionKey'], [dummyRg], hscope, "", sublime.DRAW_OUTLINED)
     # dummy edit to enable undoing ignore
     v.insert(edit, v.size(), "")
@@ -307,7 +305,6 @@ def getServer(settings, forceServer):
 class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, forceServer=None):
         global problems
-        global hscope
         v = self.view
         settings = get_settings()
         server = getServer(settings, forceServer)
@@ -420,6 +417,7 @@ class LanguageToolListener(sublime_plugin.EventListener):
 
 def recompHighlights(view):
     global problems
+    hscope = get_settings().get("highlight-scope", "comment")
     for p in problems:
         rL = view.get_regions(p['regionKey'])
         if rL:
