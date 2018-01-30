@@ -389,7 +389,7 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
 
 class ActivateRuleCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        global ignored
+        ignored = load_ignored_rules()
         if ignored:
             activate_callback_wrapper = lambda i: self.activate_callback(i)
             ruleList = [[rule['id'], rule['description']] for rule in ignored]
@@ -399,7 +399,7 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
             setStatusBar('there are no ignored rules')
 
     def activate_callback(self, i):
-        global ignored
+        ignored = load_ignored_rules()
         if i != -1:
             activate_rule = ignored[i]
             ignored.remove(activate_rule)
