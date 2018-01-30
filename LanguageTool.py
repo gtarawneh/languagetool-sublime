@@ -21,9 +21,6 @@ else:
     from . import LTServer
     from . import LanguageList
 
-# problems is an array of dictionaries, each being a language problem
-problems = []
-
 
 # select characters with indices [i, j]
 def moveCaret(view, i, j):
@@ -106,8 +103,8 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
     def run(self, edit, jumpForward=True):
-        global problems
         v = self.view
+        problems = v.__dict__.get("problems", [])
         if len(problems) > 0:
             sel = v.sel()[0]
             if jumpForward:
@@ -131,7 +128,7 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         v = self.view
-        global problems
+        problems = v.__dict__.get("problems", [])
         for p in problems:
             v.erase_regions(p['regionKey'])
         problems = []
@@ -146,8 +143,8 @@ class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
     def run(self, edit, applyFix):
-        global problems
         v = self.view
+        problems = v.__dict__.get("problems", [])
         sel = v.sel()[0]
         for p in problems:
             r = v.get_regions(p['regionKey'])[0]
@@ -186,7 +183,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
         setStatusBar('no language problem selected')
 
     def onSuggestionListSelect(self, v, p, replacements, choice):
-        global problems
+        problems = v.__dict__.get("problems", [])
         if choice != -1:
             r = v.get_regions(p['regionKey'])[0]
             v.run_command('insert', {'characters': replacements[choice]})
@@ -304,8 +301,9 @@ def getServer(settings, forceServer):
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, forceServer=None):
-        global problems
         v = self.view
+        problems = list()
+        v.problems = problems
         settings = get_settings()
         server = getServer(settings, forceServer)
         hscope = settings.get("highlight-scope", "comment")
@@ -360,9 +358,9 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
 class DeactivateRuleCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        global problems
         ignored = load_ignored_rules()
         v = self.view
+        problems = v.__dict__.get("problems", [])
         sel = v.sel()[0]
         selected = [
             p for p in problems
@@ -416,7 +414,7 @@ class LanguageToolListener(sublime_plugin.EventListener):
 
 
 def recompHighlights(view):
-    global problems
+    problems = view.__dict__.get("problems", {})
     hscope = get_settings().get("highlight-scope", "comment")
     for p in problems:
         rL = view.get_regions(p['regionKey'])
