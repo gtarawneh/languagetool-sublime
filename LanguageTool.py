@@ -37,7 +37,7 @@ def select_problem(v, p):
     r = v.get_regions(p['regionKey'])[0]
     move_caret(v, r.a, r.b)
     v.show_at_center(r)
-    showProblem(p)
+    show_problem(p)
 
 
 def is_problem_solved(v, p):
@@ -52,27 +52,29 @@ def is_problem_solved(v, p):
     return r.empty() or (v.substr(r) != p['orgContent'])
 
 
-def showProblem(p):
-    use_panel = get_settings().get('display_mode') == 'panel'
-    show_problem = show_problem_panel if use_panel else show_problem_status_bar
-    show_problem(p)
+def show_problem(p):
+    """Show problem discription and suggestions."""
 
-
-def show_problem_panel(p):
-    msg = p['message']
-    if p['replacements']:
-        msg += '\n\nSuggestion(s): ' + ', '.join(p['replacements'])
-    if p['urls']:
-        msg += '\n\nMore Info: ' + '\n'.join(p['urls'])
-    show_panel_text(msg)
-
-
-def show_problem_status_bar(p):
-    if p['replacements']:
-        msg = u"{0} ({1})".format(p['message'], p['replacements'])
-    else:
+    def show_problem_panel(p):
         msg = p['message']
-    sublime.status_message(msg)
+        if p['replacements']:
+            msg += '\n\nSuggestion(s): ' + ', '.join(p['replacements'])
+        if p['urls']:
+            msg += '\n\nMore Info: ' + '\n'.join(p['urls'])
+        show_panel_text(msg)
+
+    def show_problem_status_bar(p):
+        if p['replacements']:
+            msg = u"{0} ({1})".format(p['message'], p['replacements'])
+        else:
+            msg = p['message']
+        sublime.status_message(msg)
+
+    # call appropriate show_problem function
+
+    use_panel = get_settings().get('display_mode') == 'panel'
+    show_fun = show_problem_panel if use_panel else show_problem_status_bar
+    show_fun(p)
 
 
 def show_panel_text(str):
