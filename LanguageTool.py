@@ -23,24 +23,24 @@ else:
 
 
 # select characters with indices [i, j]
-def moveCaret(view, i, j):
+def move_caret(view, i, j):
     target = view.text_point(0, i)
     view.sel().clear()
     view.sel().add(sublime.Region(target, target + j - i))
 
 
-def setStatusBar(str):
+def set_status_bar(str):
     sublime.status_message(str)
 
 
-def selectProblem(v, p):
+def select_problem(v, p):
     r = v.get_regions(p['regionKey'])[0]
-    moveCaret(v, r.a, r.b)
+    move_caret(v, r.a, r.b)
     v.show_at_center(r)
     showProblem(p)
 
 
-def problemSolved(v, p):
+def is_problem_solved(v, p):
     rl = v.get_regions(p['regionKey'])
     if len(rl) == 0:
         print('tried to find non-existing region with key ' + p['regionKey'])
@@ -54,20 +54,20 @@ def problemSolved(v, p):
 
 def showProblem(p):
     use_panel = get_settings().get('display_mode') == 'panel'
-    show_problem = showProblemPanel if use_panel else showProblemStatusBar
+    show_problem = show_problem_panel if use_panel else show_problem_status_bar
     show_problem(p)
 
 
-def showProblemPanel(p):
+def show_problem_panel(p):
     msg = p['message']
     if p['replacements']:
         msg += '\n\nSuggestion(s): ' + ', '.join(p['replacements'])
     if p['urls']:
         msg += '\n\nMore Info: ' + '\n'.join(p['urls'])
-    showPanelText(msg)
+    show_panel_text(msg)
 
 
-def showProblemStatusBar(p):
+def show_problem_status_bar(p):
     if p['replacements']:
         msg = u"{0} ({1})".format(p['message'], p['replacements'])
     else:
@@ -75,7 +75,7 @@ def showProblemStatusBar(p):
     sublime.status_message(msg)
 
 
-def showPanelText(str):
+def show_panel_text(str):
     if _is_ST2():
         window = sublime.active_window()
         pt = window.get_output_panel("languagetool")
@@ -110,16 +110,16 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
             if jumpForward:
                 for p in problems:
                     r = v.get_regions(p['regionKey'])[0]
-                    if (not problemSolved(v, p)) and (sel.begin() < r.a):
-                        selectProblem(v, p)
+                    if (not is_problem_solved(v, p)) and (sel.begin() < r.a):
+                        select_problem(v, p)
                         return
             else:
                 for p in reversed(problems):
                     r = v.get_regions(p['regionKey'])[0]
-                    if (not problemSolved(v, p)) and (r.a < sel.begin()):
-                        selectProblem(v, p)
+                    if (not is_problem_solved(v, p)) and (r.a < sel.begin()):
+                        select_problem(v, p)
                         return
-        setStatusBar("no further language problems to fix")
+        set_status_bar("no further language problems to fix")
         sublime.active_window().run_command("hide_panel", {
             "panel": "output.languagetool"
         })
@@ -132,13 +132,13 @@ class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
         for p in problems:
             v.erase_regions(p['regionKey'])
         problems = []
-        recompHighlights(v)
+        recompute_highlights(v)
         caretPos = self.view.sel()[0].end()
         v.sel().clear()
         sublime.active_window().run_command("hide_panel", {
             "panel": "output.languagetool"
         })
-        moveCaret(v, caretPos, caretPos)
+        move_caret(v, caretPos, caretPos)
 
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
@@ -154,7 +154,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
                 if applyFix and replacements:
                     # fix selected problem:
                     if len(replacements) > 1:
-                        callbackF = lambda i : self.onSuggestionListSelect(v, p, replacements, i)
+                        callbackF = lambda i: self.handle_suggestion_selection(v, p, replacements, i)
                         v.window().show_quick_panel(replacements, callbackF)
                         return
                     else:
@@ -173,25 +173,25 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
                         # otherwise select just this one problem
                         ignoreProbs = [p]
                     for p2 in ignoreProbs:
-                        ignoreProblem(p2, v, self, edit)
+                        ignore_problem(p2, v, self, edit)
                 # after either fixing or ignoring:
-                moveCaret(v, nextCaretPos,
+                move_caret(v, nextCaretPos,
                           nextCaretPos)  # move caret to end of region
                 v.run_command("goto_next_language_problem")
                 return
         # if no problems are selected:
-        setStatusBar('no language problem selected')
+        set_status_bar('no language problem selected')
 
-    def onSuggestionListSelect(self, v, p, replacements, choice):
+    def handle_suggestion_selection(self, v, p, replacements, choice):
         problems = v.__dict__.get("problems", [])
         if choice != -1:
             r = v.get_regions(p['regionKey'])[0]
             v.run_command('insert', {'characters': replacements[choice]})
             c = r.a + len(replacements[choice])
-            moveCaret(v, c, c)  # move caret to end of region
+            move_caret(v, c, c)  # move caret to end of region
             v.run_command("goto_next_language_problem")
         else:
-            selectProblem(v, p)
+            select_problem(v, p)
 
 def get_settings():
     return sublime.load_settings('LanguageTool.sublime-settings')
@@ -221,7 +221,7 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
             else:
-                showPanelText(
+                show_panel_text(
                     'Error, could not find LanguageTool\'s JAR file (%s)\n\nPlease install LT in this directory or modify the `languagetool_jar` setting.'
                     % jarPath)
 
@@ -230,11 +230,11 @@ class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.view.languages = LanguageList.languages
         languageNames = [x[0] for x in self.view.languages]
-        handler = lambda ind: onLanguageListSelect(ind, self.view)
+        handler = lambda ind: handle_language_selection(ind, self.view)
         self.view.window().show_quick_panel(languageNames, handler)
 
 
-def onLanguageListSelect(ind, view):
+def handle_language_selection(ind, view):
     key = 'language_tool_language'
     if ind == 0:
         view.settings().erase(key)
@@ -243,12 +243,12 @@ def onLanguageListSelect(ind, view):
         view.settings().set(key, selected_language)
 
 
-def getLanguage(view):
+def get_language(view):
     key = 'language_tool_language'
     return view.settings().get(key, 'auto')
 
 
-def ignoreProblem(p, v, self, edit):
+def ignore_problem(p, v, self, edit):
     # change region associated with this problem to a 0-length region
     r = v.get_regions(p['regionKey'])[0]
     dummyRg = sublime.Region(r.a, r.a)
@@ -308,11 +308,11 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         if checkRegion.empty():
             checkRegion = sublime.Region(0, v.size())
         v.run_command("clear_language_problems")
-        lang = getLanguage(v)
+        lang = get_language(v)
         ignoredIDs = [rule['id'] for rule in ignored]
         matches = LTServer.getResponse(server, strText, lang, ignoredIDs)
         if matches == None:
-            setStatusBar(
+            set_status_bar(
                 'could not parse server response (may be due to quota if using http://languagetool.org)'
             )
             return
@@ -346,9 +346,9 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
                 problem['regionKey'] = regionKey
                 problems.append(problem)
         if problems:
-            selectProblem(v, problems[0])
+            select_problem(v, problems[0])
         else:
-            setStatusBar("no language problems were found :-)")
+            set_status_bar("no language problems were found :-)")
 
 
 class DeactivateRuleCommand(sublime_plugin.TextCommand):
@@ -362,7 +362,7 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             if sel.contains(v.get_regions(p['regionKey'])[0])
         ]
         if not selected:
-            setStatusBar('select a problem to deactivate its rule')
+            set_status_bar('select a problem to deactivate its rule')
         elif len(selected) == 1:
             rule = {
                 "id": selected[0]['rule'],
@@ -371,13 +371,13 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             ignored.append(rule)
             ignoredProblems = [p for p in problems if p['rule'] == rule['id']]
             for p in ignoredProblems:
-                ignoreProblem(p, v, self, edit)
+                ignore_problem(p, v, self, edit)
             problems = [p for p in problems if p['rule'] != rule['id']]
             v.run_command("goto_next_language_problem")
             save_ignored_rules(ignored)
-            setStatusBar('deactivated rule %s' % rule)
+            set_status_bar('deactivated rule %s' % rule)
         else:
-            setStatusBar(
+            set_status_bar(
                 'there are multiple selected problems; select only one to deactivate'
             )
 
@@ -391,7 +391,7 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
             self.view.window().show_quick_panel(ruleList,
                                                 activate_callback_wrapper)
         else:
-            setStatusBar('there are no ignored rules')
+            set_status_bar('there are no ignored rules')
 
     def activate_callback(self, i):
         ignored = load_ignored_rules()
@@ -399,21 +399,21 @@ class ActivateRuleCommand(sublime_plugin.TextCommand):
             activate_rule = ignored[i]
             ignored.remove(activate_rule)
             save_ignored_rules(ignored)
-            setStatusBar('activated rule %s' % activate_rule['id'])
+            set_status_bar('activated rule %s' % activate_rule['id'])
 
 
 class LanguageToolListener(sublime_plugin.EventListener):
     def on_modified(self, view):
         # buffer text was changed, recompute region highlights
-        recompHighlights(view)
+        recompute_highlights(view)
 
 
-def recompHighlights(view):
+def recompute_highlights(view):
     problems = view.__dict__.get("problems", {})
     hscope = get_settings().get("highlight-scope", "comment")
     for p in problems:
         rL = view.get_regions(p['regionKey'])
         if rL:
-            regionScope = "" if problemSolved(view, p) else hscope
+            regionScope = "" if is_problem_solved(view, p) else hscope
             view.add_regions(p['regionKey'], rL, regionScope, "",
                              sublime.DRAW_OUTLINED)
