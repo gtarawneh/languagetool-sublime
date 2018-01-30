@@ -228,29 +228,24 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        global languages
-        languages = LanguageList.languages
-        languageNames = [x[0] for x in languages]
-        onLanguageListSelect_wrapper = lambda i : onLanguageListSelect(i, self.view)
-        self.view.window().show_quick_panel(languageNames,
-                                            onLanguageListSelect_wrapper)
+        self.view.languages = LanguageList.languages
+        languageNames = [x[0] for x in self.view.languages]
+        handler = lambda ind: onLanguageListSelect(ind, self.view)
+        self.view.window().show_quick_panel(languageNames, handler)
 
 
-def onLanguageListSelect(i, view):
-    global languages
-    l = languages[i][1]
-    s = view.settings()
+def onLanguageListSelect(ind, view):
     key = 'language_tool_language'
-    if i == 0:
-        s.erase(key)
+    if ind == 0:
+        view.settings().erase(key)
     else:
-        s.set(key, l)
+        selected_language = view.languages[ind][1]
+        view.settings().set(key, selected_language)
 
 
 def getLanguage(view):
-    s = view.settings()
     key = 'language_tool_language'
-    return s.get(key, 'auto')
+    return view.settings().get(key, 'auto')
 
 
 def ignoreProblem(p, v, self, edit):
