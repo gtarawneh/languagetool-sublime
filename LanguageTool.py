@@ -53,7 +53,7 @@ def is_problem_solved(v, p):
 
 
 def show_problem(p):
-    """Show problem discription and suggestions."""
+    """Show problem description and suggestions."""
 
     def show_problem_panel(p):
         msg = p['message']
