@@ -178,7 +178,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
                         ignore_problem(p2, v, self, edit)
                 # after either fixing or ignoring:
                 move_caret(v, nextCaretPos,
-                          nextCaretPos)  # move caret to end of region
+                           nextCaretPos)  # move caret to end of region
                 v.run_command("goto_next_language_problem")
                 return
         # if no problems are selected:
@@ -194,6 +194,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
             v.run_command("goto_next_language_problem")
         else:
             select_problem(v, p)
+
 
 def get_settings():
     return sublime.load_settings('LanguageTool.sublime-settings')
