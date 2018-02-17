@@ -104,12 +104,12 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
 
 # navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
-    def run(self, edit, jumpForward=True):
+    def run(self, edit, jump_forward=True):
         v = self.view
         problems = v.__dict__.get("problems", [])
         if len(problems) > 0:
             sel = v.sel()[0]
-            if jumpForward:
+            if jump_forward:
                 for p in problems:
                     r = v.get_regions(p['regionKey'])[0]
                     if (not is_problem_solved(v, p)) and (sel.begin() < r.a):
@@ -144,7 +144,7 @@ class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
-    def run(self, edit, applyFix):
+    def run(self, edit, apply_fix):
         v = self.view
         problems = v.__dict__.get("problems", [])
         sel = v.sel()[0]
@@ -153,7 +153,7 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
             replacements = p['replacements']
             nextCaretPos = r.a
             if r == sel:
-                if applyFix and replacements:
+                if apply_fix and replacements:
                     # fix selected problem:
                     if len(replacements) > 1:
                         callbackF = lambda i: self.handle_suggestion_selection(v, p, replacements, i)
