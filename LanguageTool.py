@@ -1,7 +1,9 @@
-# LanguageTool.py
-#
-# This is a simple Sublime Text plugin for checking grammar. It passes buffer
-# content to LanguageTool (via http) and highlights reported problems.
+"""
+LanguageTool.py
+
+This is a simple Sublime Text plugin for checking grammar. It passes buffer
+content to LanguageTool (via http) and highlights reported problems.
+"""
 
 import sublime
 import sublime_plugin
@@ -22,14 +24,15 @@ else:
     from . import LanguageList
 
 
-# select characters with indices [i, j]
 def move_caret(view, i, j):
+    """Select character range [i, j] in view."""
     target = view.text_point(0, i)
     view.sel().clear()
     view.sel().add(sublime.Region(target, target + j - i))
 
 
 def set_status_bar(str):
+    """Change status bar message."""
     sublime.status_message(str)
 
 
