@@ -16,22 +16,22 @@
 	{
 		"caption": "LanguageTool: Next Problem",
 		"command": "goto_next_language_problem",
-		"args": {"jumpForward": true}
+		"args": {"jump_forward": true}
 	},
 	{
 		"caption": "LanguageTool: Previous Problem",
 		"command": "goto_next_language_problem",
-		"args": {"jumpForward": false}
+		"args": {"jump_forward": false}
 	},
 	{
 		"caption": "LanguageTool: Apply Suggested Correction(s)",
 		"command": "mark_language_problem_solved",
-		"args": {"applyFix": true}
+		"args": {"apply_fix": true}
 	},
 	{
 		"caption": "LanguageTool: Ignore Problem",
 		"command": "mark_language_problem_solved",
-		"args": {"applyFix": false}
+		"args": {"apply_fix": false}
 	},
 	{
 		"caption": "LanguageTool: Clear Problems",
