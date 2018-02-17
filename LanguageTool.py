@@ -277,7 +277,7 @@ def save_ignored_rules(ignored):
     sublime.save_settings(ignored_rules_file)
 
 
-def getServer(settings, forceServer):
+def getServer(settings, force_server):
     # returns server url based on the setting `default_server`
     #
     # If `default_server` is `local` then return the server defined in
@@ -289,9 +289,9 @@ def getServer(settings, forceServer):
     # if `default_server` is anything else then treat as `remote`
     #
     settings = get_settings()
-    if forceServer is None:
-        forceServer = settings.get('default_server', 'remote')
-    if forceServer == "local":
+    if force_server is None:
+        force_server = settings.get('default_server', 'remote')
+    if force_server == "local":
         server = settings.get('languagetool_server_local',
                               'http://localhost:8081/v2/check')
     else:
@@ -301,12 +301,12 @@ def getServer(settings, forceServer):
 
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
-    def run(self, edit, forceServer=None):
+    def run(self, edit, force_server=None):
         v = self.view
         problems = list()
         v.problems = problems
         settings = get_settings()
-        server = getServer(settings, forceServer)
+        server = getServer(settings, force_server)
         hscope = settings.get("highlight-scope", "comment")
         ignored = load_ignored_rules()
         strText = v.substr(sublime.Region(0, v.size()))

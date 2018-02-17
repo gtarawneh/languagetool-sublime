@@ -6,12 +6,12 @@
 	{
 		"caption": "LanguageTool: Check Text (Local Server)",
 		"command": "language_tool",
-		"args": {"forceServer": "local"}
+		"args": {"force_server": "local"}
 	},
 	{
 		"caption": "LanguageTool: Check Text (Remote Server)",
 		"command": "language_tool",
-		"args": {"forceServer": "remote"}
+		"args": {"force_server": "remote"}
 	},
 	{
 		"caption": "LanguageTool: Next Problem",
