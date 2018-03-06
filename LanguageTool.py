@@ -204,32 +204,40 @@ def get_settings():
 
 
 class startLanguageToolServerCommand(sublime_plugin.TextCommand):
-    # sublime.active_window().active_view().run_command('start_language_tool_server')
+    """Launch local LanguageTool Server."""
+
     def run(self, edit):
-        jarPath = get_settings().get('languagetool_jar')
-        if jarPath:
-            if os.path.isfile(jarPath):
-                sublime.status_message(
-                    'Starting local LanguageTool server ...')
-                cmd = ['java', '-jar', jarPath, '-t']
-                if sublime.platform() == "windows":
-                    p = subprocess.Popen(
-                        cmd,
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        shell=True,
-                        creationflags=subprocess.SW_HIDE)
-                else:
-                    p = subprocess.Popen(
-                        cmd,
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
-            else:
-                show_panel_text(
-                    'Error, could not find LanguageTool\'s JAR file (%s)\n\nPlease install LT in this directory or modify the `languagetool_jar` setting.'
-                    % jarPath)
+
+        jar_path = get_settings().get('languagetool_jar')
+
+        if not jar_path:
+            show_panel_text("Setting languagetool_jar is undefined")
+            return
+
+        if not os.path.isfile(jar_path):
+            show_panel_text(
+                'Error, could not find LanguageTool\'s JAR file (%s)\n\nPlease install LT in this directory or modify the `languagetool_jar` setting.'
+                % jar_path)
+            return
+
+        sublime.status_message('Starting local LanguageTool server ...')
+
+        cmd = ['java', '-jar', jar_path, '-t']
+
+        if sublime.platform() == "windows":
+            p = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+                creationflags=subprocess.SW_HIDE)
+        else:
+            p = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
 
 
 class changeLanguageToolLanguageCommand(sublime_plugin.TextCommand):
