@@ -36,11 +36,11 @@ def set_status_bar(str):
     sublime.status_message(str)
 
 
-def select_problem(v, p):
-    r = v.get_regions(p['regionKey'])[0]
-    move_caret(v, r.a, r.b)
-    v.show_at_center(r)
-    show_problem(p)
+def select_problem(view, prob):
+    reg = view.get_regions(prob['regionKey'])[0]
+    move_caret(view, reg.a, reg.b)
+    view.show_at_center(reg)
+    show_problem(prob)
 
 
 def is_problem_solved(v, p):
