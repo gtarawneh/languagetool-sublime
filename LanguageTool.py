@@ -159,7 +159,8 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
                 if apply_fix and replacements:
                     # fix selected problem:
                     if len(replacements) > 1:
-                        callbackF = lambda i: self.handle_suggestion_selection(v, p, replacements, i)
+                        def callbackF(i):
+                            self.choose_suggestion(v, p, replacements, i)
                         v.window().show_quick_panel(replacements, callbackF)
                         return
                     else:
@@ -168,8 +169,8 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
                 else:
                     # ignore problem:
                     if p['category'] == "Possible Typo":
-                        # if this is a typo then include all identical typos in the
-                        # list of problems to be fixed
+                        # if this is a typo then include all identical typos in
+                        # the list of problems to be fixed
                         pID = lambda py: (py['category'], py['orgContent'])
                         ignoreProbs = [
                             px for px in problems if pID(p) == pID(px)
@@ -187,7 +188,8 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
         # if no problems are selected:
         set_status_bar('no language problem selected')
 
-    def handle_suggestion_selection(self, v, p, replacements, choice):
+    def choose_suggestion(self, v, p, replacements, choice):
+        """Handle suggestion list selection."""
         problems = v.__dict__.get("problems", [])
         if choice != -1:
             r = v.get_regions(p['regionKey'])[0]
@@ -216,7 +218,10 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
 
         if not os.path.isfile(jar_path):
             show_panel_text(
-                'Error, could not find LanguageTool\'s JAR file (%s)\n\nPlease install LT in this directory or modify the `languagetool_jar` setting.'
+                'Error, could not find LanguageTool\'s JAR file (%s)'
+                '\n\n'
+                'Please install LT in this directory'
+                ' or modify the `languagetool_jar` setting.'
                 % jar_path)
             return
 
@@ -292,7 +297,8 @@ def getServer(settings, force_server):
     # `language_server_local` (defaults to 'http://localhost:8081/v2/check').
     #
     # If `default_server` is `remote` then return the server defined in
-    # `language_server_remote` (defaults to 'https://languagetool.org/api/v2/check').
+    # `language_server_remote` (defaults to
+    # 'https://languagetool.org/api/v2/check').
     #
     # if `default_server` is anything else then treat as `remote`
     #
@@ -327,7 +333,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         matches = LTServer.getResponse(server, strText, lang, ignoredIDs)
         if matches == None:
             set_status_bar(
-                'could not parse server response (may be due to quota if using http://languagetool.org)'
+                'could not parse server response'
+                ' (may be due to quota if using http://languagetool.org)'
             )
             return
         for match in matches:
@@ -392,7 +399,8 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             set_status_bar('deactivated rule %s' % rule)
         else:
             set_status_bar(
-                'there are multiple selected problems; select only one to deactivate'
+                'there are multiple selected problems;'
+                ' select only one to deactivate'
             )
 
 
