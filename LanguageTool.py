@@ -291,27 +291,22 @@ def save_ignored_rules(ignored):
     sublime.save_settings(ignored_rules_file)
 
 
-def getServer(settings, force_server):
-    # returns server url based on the setting `default_server`
-    #
-    # If `default_server` is `local` then return the server defined in
-    # `language_server_local` (defaults to 'http://localhost:8081/v2/check').
-    #
-    # If `default_server` is `remote` then return the server defined in
-    # `language_server_remote` (defaults to
-    # 'https://languagetool.org/api/v2/check').
-    #
-    # if `default_server` is anything else then treat as `remote`
-    #
-    settings = get_settings()
-    if force_server is None:
-        force_server = settings.get('default_server', 'remote')
-    if force_server == "local":
-        server = settings.get('languagetool_server_local',
-                              'http://localhost:8081/v2/check')
-    else:
-        server = settings.get('languagetool_server_remote',
-                              'https://languagetool.org/api/v2/check')
+def get_server(settings, force_server):
+    """Return LT server url based on settings.
+
+    The returned url is for either the local or remote servers, defined by the
+    settings entries:
+
+        - language_server_local
+        - language_server_remote
+
+    The choice between the above is made based on the settings value
+    'default_server'. If not None, `force_server` will override this setting.
+
+    """
+    server_setting = force_server or settings.get('default_server')
+    setting_name = 'languagetool_server_%s' % server_setting
+    server = settings.get(setting_name)
     return server
 
 
@@ -321,7 +316,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         problems = list()
         v.problems = problems
         settings = get_settings()
-        server = getServer(settings, force_server)
+        server = get_server(settings, force_server)
         hscope = settings.get("highlight-scope", "comment")
         ignored = load_ignored_rules()
         strText = v.substr(sublime.Region(0, v.size()))
