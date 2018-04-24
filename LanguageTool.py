@@ -159,8 +159,10 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
                 if apply_fix and replacements:
                     # fix selected problem:
                     if len(replacements) > 1:
+
                         def callbackF(i):
                             self.choose_suggestion(v, p, replacements, i)
+
                         v.window().show_quick_panel(replacements, callbackF)
                         return
                     else:
@@ -221,8 +223,7 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
                 'Error, could not find LanguageTool\'s JAR file (%s)'
                 '\n\n'
                 'Please install LT in this directory'
-                ' or modify the `languagetool_jar` setting.'
-                % jar_path)
+                ' or modify the `languagetool_jar` setting.' % jar_path)
             return
 
         sublime.status_message('Starting local LanguageTool server ...')
@@ -334,8 +335,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         if matches == None:
             set_status_bar(
                 'could not parse server response'
-                ' (may be due to quota if using http://languagetool.org)'
-            )
+                ' (may be due to quota if using http://languagetool.org)')
             return
         for match in matches:
             problem = {
@@ -398,10 +398,8 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             save_ignored_rules(ignored)
             set_status_bar('deactivated rule %s' % rule)
         else:
-            set_status_bar(
-                'there are multiple selected problems;'
-                ' select only one to deactivate'
-            )
+            set_status_bar('there are multiple selected problems;'
+                           ' select only one to deactivate')
 
 
 class ActivateRuleCommand(sublime_plugin.TextCommand):
