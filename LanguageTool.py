@@ -316,8 +316,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
         selection = self.view.sel()[0]  # first selection (ignore rest)
         everything = sublime.Region(0, self.view.size())
-        check_text = self.view.substr(everything)
         check_region = everything if selection.empty() else selection
+        check_text = self.view.substr(check_region)
 
         self.view.run_command("clear_language_problems")
 
@@ -334,7 +334,8 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
         def get_region(problem):
             """Return a Region object corresponding to problem text."""
-            offset, length = problem['offset'], problem['length']
+            length = problem['length']
+            offset = problem['offset'] + check_region.a
             return sublime.Region(offset, offset + length)
 
         def inside(problem):
@@ -344,16 +345,16 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
         def is_ignored(problem):
             """Return True iff any problem scope is ignored."""
-            region = get_region(problem)
-            scopes = self.view.scope_name(region.a).split(' ')[0:-1]  # problem scopes
+            scope_string = self.view.scope_name(problem['offset'])
+            scopes = scope_string.split()
             return cross_match(scopes, ignored_scopes, fnmatch.fnmatch)
 
         def add_highlight_region(region_key, problem):
             region = get_region(problem)
-            self.view.add_regions(region_key, [region], highlight_scope, "",
-                                  sublime.DRAW_OUTLINED)
             problem['orgContent'] = self.view.substr(region)
             problem['regionKey'] = region_key
+            self.view.add_regions(region_key, [region], highlight_scope, "",
+                                  sublime.DRAW_OUTLINED)
 
         problems = [problem for problem in map(parse_match, matches)
                     if inside(problem) and not is_ignored(problem)]
@@ -374,18 +375,14 @@ def cross_match(list1, list2, predicate):
 
     Args:
       list1 (list): list 1.
-      list2 (list): list2.
+      list2 (list): list 2.
 
     Returns:
       True iff predicate(x, y) is True for any x in list1 and y in list2,
       False otherwise.
 
     """
-    for x, y in itertools.product(list1, list2):
-        if predicate(x, y):
-            return True
-
-    return False
+    return any(predicate(x, y) for x, y in itertools.product(list1, list2))
 
 
 def parse_match(match):
