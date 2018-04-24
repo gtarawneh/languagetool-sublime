@@ -10,6 +10,7 @@ import sublime_plugin
 import subprocess
 import os.path
 import fnmatch
+import itertools
 
 
 def _is_ST2():
@@ -263,11 +264,6 @@ def handle_language_selection(ind, view):
         view.settings().set(key, selected_language)
 
 
-def get_language(view):
-    key = 'language_tool_language'
-    return view.settings().get(key, 'auto')
-
-
 def ignore_problem(p, v, self, edit):
     # change region associated with this problem to a 0-length region
     r = v.get_regions(p['regionKey'])[0]
@@ -291,7 +287,7 @@ def save_ignored_rules(ignored):
     sublime.save_settings(ignored_rules_file)
 
 
-def get_server(settings, force_server):
+def get_server_url(settings, force_server):
     """Return LT server url based on settings.
 
     The returned url is for either the local or remote servers, defined by the
@@ -312,59 +308,100 @@ def get_server(settings, force_server):
 
 class LanguageToolCommand(sublime_plugin.TextCommand):
     def run(self, edit, force_server=None):
-        v = self.view
-        problems = list()
-        v.problems = problems
+
         settings = get_settings()
-        server = get_server(settings, force_server)
-        hscope = settings.get("highlight-scope", "comment")
-        ignored = load_ignored_rules()
-        strText = v.substr(sublime.Region(0, v.size()))
-        checkRegion = v.sel()[0]
-        if checkRegion.empty():
-            checkRegion = sublime.Region(0, v.size())
-        v.run_command("clear_language_problems")
-        lang = get_language(v)
-        ignoredIDs = [rule['id'] for rule in ignored]
-        matches = LTServer.getResponse(server, strText, lang, ignoredIDs)
+        server_url = get_server_url(settings, force_server)
+        ignored_scopes = settings.get('ignored-scopes')
+        highlight_scope = settings.get('highlight-scope')
+
+        selection = self.view.sel()[0]  # first selection (ignore rest)
+        everything = sublime.Region(0, self.view.size())
+        check_text = self.view.substr(everything)
+        check_region = everything if selection.empty() else selection
+
+        self.view.run_command("clear_language_problems")
+
+        language = self.view.settings().get('language_tool_language', 'auto')
+        ignored_ids = [rule['id'] for rule in load_ignored_rules()]
+
+        matches = LTServer.getResponse(server_url, check_text, language,
+                                       ignored_ids)
+
         if matches == None:
-            set_status_bar(
-                'could not parse server response'
-                ' (may be due to quota if using http://languagetool.org)')
+            set_status_bar('could not parse server response (may be due to'
+                           ' quota if using https://languagetool.org)')
             return
-        for match in matches:
-            problem = {
-                'category': match['rule']['category']['name'],
-                'message': match['message'],
-                'replacements': [r['value'] for r in match['replacements']],
-                'rule': match['rule']['id'],
-                'urls': [w['value'] for w in match['rule'].get('urls', [])],
-            }
-            offset = match['offset']
-            length = match['length']
-            region = sublime.Region(offset, offset + length)
-            if not checkRegion.contains(region):
-                continue
-            ignored_scopes = settings.get('ignored-scopes', [])
-            # view.scope_name() returns a string of space-separated scope names
-            # (ending with a space)
-            pscopes = v.scope_name(region.a).split(' ')[0:-1]
-            for ps in pscopes:
-                if any([fnmatch.fnmatch(ps, i) for i in ignored_scopes]):
-                    ignored = True
-                    break
-            else:
-                # none of this region's scopes are ignored
-                regionKey = str(len(problems))
-                v.add_regions(regionKey, [region], hscope, "",
-                              sublime.DRAW_OUTLINED)
-                problem['orgContent'] = v.substr(region)
-                problem['regionKey'] = regionKey
-                problems.append(problem)
+
+        def get_region(problem):
+            """Return a Region object corresponding to problem text."""
+            offset, length = problem['offset'], problem['length']
+            return sublime.Region(offset, offset + length)
+
+        def inside(problem):
+            """Return True iff problem text is inside check_region."""
+            region = get_region(problem)
+            return check_region.contains(region)
+
+        def is_ignored(problem):
+            """Return True iff any problem scope is ignored."""
+            region = get_region(problem)
+            scopes = self.view.scope_name(region.a).split(' ')[0:-1]  # problem scopes
+            return cross_match(scopes, ignored_scopes, fnmatch.fnmatch)
+
+        def add_highlight_region(region_key, problem):
+            region = get_region(problem)
+            self.view.add_regions(region_key, [region], highlight_scope, "",
+                                  sublime.DRAW_OUTLINED)
+            problem['orgContent'] = self.view.substr(region)
+            problem['regionKey'] = region_key
+
+        problems = [problem for problem in map(parse_match, matches)
+                    if inside(problem) and not is_ignored(problem)]
+
+        for index, problem in enumerate(problems):
+            add_highlight_region(str(index), problem)
+
         if problems:
-            select_problem(v, problems[0])
+            select_problem(self.view, problems[0])
         else:
             set_status_bar("no language problems were found :-)")
+
+        self.view.problems = problems
+
+
+def cross_match(list1, list2, predicate):
+    """Cross match items from two lists using a predicate.
+
+    Args:
+      list1 (list): list 1.
+      list2 (list): list2.
+
+    Returns:
+      True iff predicate(x, y) is True for any x in list1 and y in list2,
+      False otherwise.
+
+    """
+    for x, y in itertools.product(list1, list2):
+        if predicate(x, y):
+            return True
+
+    return False
+
+
+def parse_match(match):
+    """Parse a match object."""
+
+    problem = {
+        'category': match['rule']['category']['name'],
+        'message': match['message'],
+        'replacements': [r['value'] for r in match['replacements']],
+        'rule': match['rule']['id'],
+        'urls': [w['value'] for w in match['rule'].get('urls', [])],
+        'offset': match['offset'],
+        'length': match['length']
+    }
+
+    return problem
 
 
 class DeactivateRuleCommand(sublime_plugin.TextCommand):
