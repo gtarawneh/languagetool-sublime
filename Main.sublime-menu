@@ -15,7 +15,7 @@
                             {
                                 "caption": "Settings – Default",
                                 "args": {
-                                    "file": "${packages}/languagetool-sublime/LanguageTool.sublime-settings"
+                                    "file": "${packages}/LanguageTool/LanguageTool.sublime-settings"
                                 },
                                 "command": "open_file"
                             },
