@@ -149,59 +149,68 @@ class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
     def run(self, edit, apply_fix):
+
         v = self.view
+
         problems = v.__dict__.get("problems", [])
-        sel = v.sel()[0]
-        for p in problems:
-            r = v.get_regions(p['regionKey'])[0]
-            replacements = p['replacements']
-            nextCaretPos = r.a
-            if r == sel:
-                if apply_fix and replacements:
-                    # fix selected problem:
-                    if len(replacements) > 1:
+        selected_region = v.sel()[0]
 
-                        def callbackF(i):
-                            self.choose_suggestion(v, p, replacements, i)
-
-                        v.window().show_quick_panel(replacements, callbackF)
-                        return
-                    else:
-                        v.replace(edit, r, replacements[0])
-                        nextCaretPos = r.a + len(replacements[0])
-                else:
-                    # ignore problem:
-                    if p['category'] == "Possible Typo":
-                        # if this is a typo then include all identical typos in
-                        # the list of problems to be fixed
-                        pID = lambda py: (py['category'], py['orgContent'])
-                        ignoreProbs = [
-                            px for px in problems if pID(p) == pID(px)
-                        ]
-                    else:
-                        # otherwise select just this one problem
-                        ignoreProbs = [p]
-                    for p2 in ignoreProbs:
-                        ignore_problem(p2, v, self, edit)
-                # after either fixing or ignoring:
-                move_caret(v, nextCaretPos,
-                           nextCaretPos)  # move caret to end of region
-                v.run_command("goto_next_language_problem")
-                return
-        # if no problems are selected:
-        set_status_bar('no language problem selected')
-
-    def choose_suggestion(self, v, p, replacements, choice):
-        """Handle suggestion list selection."""
-        problems = v.__dict__.get("problems", [])
-        if choice != -1:
-            r = v.get_regions(p['regionKey'])[0]
-            v.run_command('insert', {'characters': replacements[choice]})
-            c = r.a + len(replacements[choice])
-            move_caret(v, c, c)  # move caret to end of region
-            v.run_command("goto_next_language_problem")
+        # Find problem corresponding to selection
+        for problem in problems:
+            problem_region = v.get_regions(problem['regionKey'])[0]
+            if problem_region == selected_region:
+                break
         else:
-            select_problem(v, p)
+            set_status_bar('no language problem selected')
+            return
+
+        next_caret_pos = problem_region.a
+        replacements = problem['replacements']
+
+        if apply_fix and replacements:
+            # fix selected problem:
+            correct_problem(self.view, edit, problem, replacements)
+
+        else:
+            # ignore problem:
+            equal_problems = get_equal_problems(problems, problem)
+            for p2 in equal_problems:
+                ignore_problem(p2, v, edit)
+            # After ignoring problem:
+            move_caret(v, next_caret_pos, next_caret_pos)  # advance caret
+            v.run_command("goto_next_language_problem")
+
+def choose_suggestion(v, p, replacements, choice):
+    """Handle suggestion list selection."""
+    problems = v.__dict__.get("problems", [])
+    if choice != -1:
+        r = v.get_regions(p['regionKey'])[0]
+        v.run_command('insert', {'characters': replacements[choice]})
+        c = r.a + len(replacements[choice])
+        move_caret(v, c, c)  # move caret to end of region
+        v.run_command("goto_next_language_problem")
+    else:
+        select_problem(v, p)
+
+
+def get_equal_problems(problems, x):
+    """Find problems with same category and content as a given problem.
+
+    Args:
+      problems (list): list of problems to compare.
+      x (dict): problem object to compare with.
+
+    Returns:
+      list: list of problems equal to x.
+
+    """
+
+    def is_equal(prob1, prob2):
+        same_category = prob1['category'] == prob2['category']
+        same_content = prob1['orgContent'] == prob2['orgContent']
+        return same_category and same_content
+
+    return [problem for problem in problems if is_equal(problem, x)]
 
 
 def get_settings():
@@ -264,14 +273,36 @@ def handle_language_selection(ind, view):
         view.settings().set(key, selected_language)
 
 
-def ignore_problem(p, v, self, edit):
-    # change region associated with this problem to a 0-length region
-    r = v.get_regions(p['regionKey'])[0]
+def correct_problem(view, edit, problem, replacements):
+
+    def clear_and_advance():
+        clear_region(view, problem['regionKey'])
+        move_caret(view, next_caret_pos, next_caret_pos)  # advance caret
+        view.run_command("goto_next_language_problem")
+
+    if len(replacements) > 1:
+        def callback_fun(i):
+            choose_suggestion(view, problem, replacements, i)
+            clear_and_advance()
+        view.window().show_quick_panel(replacements, callback_fun)
+
+    else:
+        region = view.get_regions(problem['regionKey'])[0]
+        view.replace(edit, region, replacements[0])
+        next_caret_pos = region.a + len(replacements[0])
+        clear_and_advance()
+
+
+def clear_region(view, region_key):
+    r = view.get_regions(region_key)[0]
     dummyRg = sublime.Region(r.a, r.a)
     hscope = get_settings().get("highlight-scope", "comment")
-    v.add_regions(p['regionKey'], [dummyRg], hscope, "", sublime.DRAW_OUTLINED)
-    # dummy edit to enable undoing ignore
-    v.insert(edit, v.size(), "")
+    view.add_regions(region_key, [dummyRg], hscope, "", sublime.DRAW_OUTLINED)
+
+
+def ignore_problem(p, v, edit):
+    clear_region(v, p['regionKey'])
+    v.insert(edit, v.size(), "")  # dummy edit to enable undoing ignore
 
 
 def load_ignored_rules():
@@ -335,7 +366,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         def get_region(problem):
             """Return a Region object corresponding to problem text."""
             length = problem['length']
-            offset = problem['offset'] + check_region.a
+            offset = problem['offset']
             return sublime.Region(offset, offset + length)
 
         def inside(problem):
@@ -356,7 +387,12 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             self.view.add_regions(region_key, [region], highlight_scope, "",
                                   sublime.DRAW_OUTLINED)
 
-        problems = [problem for problem in map(parse_match, matches)
+
+        shifter = lambda problem: shift_offset(problem, check_region.a)
+
+        get_problem = compose(shifter, parse_match)
+
+        problems = [problem for problem in map(get_problem, matches)
                     if inside(problem) and not is_ignored(problem)]
 
         for index, problem in enumerate(problems):
@@ -368,6 +404,13 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
             set_status_bar("no language problems were found :-)")
 
         self.view.problems = problems
+
+
+def compose(f1, f2):
+    """Compose two functions."""
+    def inner(*args, **kwargs):
+        return f1(f2(*args, **kwargs))
+    return inner
 
 
 def cross_match(list1, list2, predicate):
@@ -385,8 +428,23 @@ def cross_match(list1, list2, predicate):
     return any(predicate(x, y) for x, y in itertools.product(list1, list2))
 
 
+def shift_offset(problem, shift):
+    """Shift problem offset by `shift`."""
+
+    problem['offset'] += shift
+    return problem
+
+
 def parse_match(match):
-    """Parse a match object."""
+    """Parse a match object.
+
+    Args:
+      match (dict): match object returned by LanguageTool Server.
+
+    Returns:
+      dict: problem object.
+
+    """
 
     problem = {
         'category': match['rule']['category']['name'],
