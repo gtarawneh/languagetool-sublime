@@ -180,17 +180,17 @@ class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
             move_caret(v, next_caret_pos, next_caret_pos)  # advance caret
             v.run_command("goto_next_language_problem")
 
-def choose_suggestion(v, p, replacements, choice):
+def choose_suggestion(view, p, replacements, choice):
     """Handle suggestion list selection."""
-    problems = v.__dict__.get("problems", [])
+    problems = view.__dict__.get("problems", [])
     if choice != -1:
-        r = v.get_regions(p['regionKey'])[0]
-        v.run_command('insert', {'characters': replacements[choice]})
+        r = view.get_regions(p['regionKey'])[0]
+        view.run_command('insert', {'characters': replacements[choice]})
         c = r.a + len(replacements[choice])
-        move_caret(v, c, c)  # move caret to end of region
-        v.run_command("goto_next_language_problem")
+        move_caret(view, c, c)  # move caret to end of region
+        view.run_command("goto_next_language_problem")
     else:
-        select_problem(v, p)
+        select_problem(view, p)
 
 
 def get_equal_problems(problems, x):
