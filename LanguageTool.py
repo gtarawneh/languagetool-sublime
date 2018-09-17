@@ -84,17 +84,15 @@ def show_problem(p):
 
 
 def show_panel_text(text):
+    window = sublime.active_window()
     if _is_ST2():
-        window = sublime.active_window()
         pt = window.get_output_panel("languagetool")
         pt.set_read_only(False)
         edit = pt.begin_edit()
         pt.insert(edit, pt.size(), text)
         window.run_command("show_panel", {"panel": "output.languagetool"})
     else:
-        sublime.active_window().run_command('set_language_tool_panel_text', {
-            'str': text
-        })
+        window.run_command('set_language_tool_panel_text', {'str': text})
 
 
 class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
