@@ -32,28 +32,28 @@ def move_caret(view, i, j):
     view.sel().add(sublime.Region(target, target + j - i))
 
 
-def set_status_bar(str):
+def set_status_bar(message):
     """Change status bar message."""
-    sublime.status_message(str)
+    sublime.status_message(message)
 
 
-def select_problem(view, prob):
-    reg = view.get_regions(prob['regionKey'])[0]
+def select_problem(view, problem):
+    reg = view.get_regions(problem['regionKey'])[0]
     move_caret(view, reg.a, reg.b)
     view.show_at_center(reg)
-    show_problem(prob)
+    show_problem(problem)
 
 
-def is_problem_solved(v, p):
-    rl = v.get_regions(p['regionKey'])
+def is_problem_solved(view, problem):
+    rl = view.get_regions(problem['regionKey'])
     if len(rl) == 0:
-        print('tried to find non-existing region with key ' + p['regionKey'])
+        print('tried to find non-existing region with key ' + problem['regionKey'])
         return True
     r = rl[0]
-    # a problem is solved when either:
+    # a problem is considered solved when either:
     # 1. its region has zero length
     # 2. its contents have been changed
-    return r.empty() or (v.substr(r) != p['orgContent'])
+    return r.empty() or (view.substr(r) != problem['orgContent'])
 
 
 def show_problem(p):
@@ -81,17 +81,17 @@ def show_problem(p):
     show_fun(p)
 
 
-def show_panel_text(str):
+def show_panel_text(text):
     if _is_ST2():
         window = sublime.active_window()
         pt = window.get_output_panel("languagetool")
         pt.set_read_only(False)
         edit = pt.begin_edit()
-        pt.insert(edit, pt.size(), str)
+        pt.insert(edit, pt.size(), text)
         window.run_command("show_panel", {"panel": "output.languagetool"})
     else:
         sublime.active_window().run_command('set_language_tool_panel_text', {
-            'str': str
+            'str': text
         })
 
 
@@ -106,7 +106,6 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
         window.run_command("show_panel", {"panel": "output.languagetool"})
 
 
-# navigation function
 class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
     def run(self, edit, jump_forward=True):
         v = self.view
