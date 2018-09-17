@@ -45,15 +45,17 @@ def select_problem(view, problem):
 
 
 def is_problem_solved(view, problem):
+    """Return True iff a language problem has been resolved.
+
+    A problem is considered resolved if either:
+
+    1. its region has zero length, or
+    2. its contents have been changed.
+    """
     rl = view.get_regions(problem['regionKey'])
-    if len(rl) == 0:
-        print('tried to find non-existing region with key ' + problem['regionKey'])
-        return True
-    r = rl[0]
-    # a problem is considered solved when either:
-    # 1. its region has zero length
-    # 2. its contents have been changed
-    return r.empty() or (view.substr(r) != problem['orgContent'])
+    assert len(rl) > 0, 'tried to find non-existing region'
+    region = rl[0]
+    return region.empty() or (view.substr(region) != problem['orgContent'])
 
 
 def show_problem(p):
