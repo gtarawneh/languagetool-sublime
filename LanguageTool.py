@@ -478,7 +478,7 @@ class DeactivateRuleCommand(sublime_plugin.TextCommand):
             ignored.append(rule)
             ignoredProblems = [p for p in problems if p['rule'] == rule['id']]
             for p in ignoredProblems:
-                ignore_problem(p, v, self, edit)
+                ignore_problem(p, v, edit)
             problems = [p for p in problems if p['rule'] != rule['id']]
             v.run_command("goto_next_language_problem")
             save_ignored_rules(ignored)
