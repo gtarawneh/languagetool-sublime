@@ -102,7 +102,7 @@ class setLanguageToolPanelTextCommand(sublime_plugin.TextCommand):
         pt.settings().set("wrap_width", 0)
         pt.settings().set("word_wrap", True)
         pt.set_read_only(False)
-        pt.insert(edit, pt.size(), str)
+        pt.run_command('insert', {'characters': str})
         window.run_command("show_panel", {"panel": "output.languagetool"})
 
 
