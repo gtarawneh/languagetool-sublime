@@ -6,13 +6,13 @@ This is a simple adapter to integrate
 [LanguageTool](https://languagetool.org/) (an open source proof-reading
 program) into Sublime Text 2/3.
 
-From https://www.languagetool.org/:
+From <https://www.languagetool.org/>:
 
 > LanguageTool is an Open Source proof­reading program for English, French,
 > German, Polish, and more than 20 other languages. It finds many errors that
 > a simple spell checker cannot detect and several grammar problems.
 
-![](https://cdn.rawgit.com/gtarawneh/languagetool-sublime/master/demo.gif)
+![languagetol-sublime demo](https://cdn.rawgit.com/gtarawneh/languagetool-sublime/master/demo.gif)
 
 #### Installation
 
@@ -52,20 +52,25 @@ or reinstalled. Instead, copy and modify any settings you wish to override to
 
 The adapter supports local and remote LanguageTool servers. Remote checking is
 the default and works by submitting text over https to an api endpoint on
-https://languagetool.org (this can be changed in plugin settings). This public
+<https://languagetool.org> (this can be changed in plugin settings). This public
 service is subject to usage constraints including:
 
-1. Maximum text size of 50Kb
-2. Access limited to 20 requests/minute per IP
+1. 20 requests per IP per minute (this is supposed to be a peak value — don’t
+	constantly send this many requests or LanguageTool would have to block you)
+2. 75KB text per IP per minute
+3. 20KB text per request
+4. Only up to 30 misspelled words will have suggestions.
+5. No guarantees about performance or availability.
+	The limits may change at any time.
 
-(See http://wiki.languagetool.org/public-http-api for full details.)
+(See <https://dev.languagetool.org/public-http-api> for full details.)
 
 Instead of using the public (remote) LanguageTool service, text can be checked
 using a local LanguageTool Installation. A local LanguageTool server can be
 started by the plugin itself using the command `LanguageTool: Start Local
 Server` (this requires the settings entry `languagetool_jar` to point to the
 local languagetool JAR file), or from the command line following the
-instructions in http://wiki.languagetool.org/http-server.
+instructions in <https://dev.languagetool.org/http-server>.
 
 The settings file contains remote and local server URL entries. A third option
 `default_server` indicates which of these is used when the command
