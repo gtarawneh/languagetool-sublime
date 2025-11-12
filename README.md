@@ -8,7 +8,7 @@ program) into Sublime Text 2/3.
 
 From <https://www.languagetool.org/>:
 
-> LanguageTool is an Open Source proof­reading program for English, French,
+> LanguageTool is an Open Source proofreading program for English, French,
 > German, Polish, and more than 20 other languages. It finds many errors that
 > a simple spell checker cannot detect and several grammar problems.
 
@@ -30,7 +30,7 @@ Open the file you want to proof-read then:
 
 1. Run a language check (<kbd>ctrl+shift+c</kbd>). Any problems identified by LanguageTool will be highlighted.
 2. Move between the problems using <kbd>alt+down</kbd> (next) and <kbd>alt+up</kbd> (previous).
-3. A panel at the bottom will display a brief description  of the highlighted problem and suggest corrections if available.
+3. A panel at the bottom will display a brief description of the highlighted problem and suggest corrections if available.
 4. Begin typing to correct the selected problem or press <kbd>alt+shift+f</kbd> to apply the suggested correction.
 5. To ignore a problem, press <kbd>alt+d</kbd>.
 6. Auto-correcting a problem or ignoring it will move focus to the next problem.
@@ -82,6 +82,59 @@ The settings file contains remote and local server URL entries. A third option
 are provided, which can be used to check text using the local/remote servers
 regardless of `default_server`. This can be used for one-off checks when it's
 desirable to use a particular server with certain pieces of text.
+
+#### Ignoring specific messages
+
+If you don’t need specific LanguageTool messages, you can ignore them.
+
+The example below shows how to ignore LanguageTool spell checking messages for English and Russian languages. You can follow these steps for ignoring other messages.
+
+1. [Start your local LanguageTool server](https://dev.languagetool.org/http-server#starting-from-command-line) from your terminal:
+
+	```bash
+	"path/to/your/binary/java" --class-path "path/to/your/file/languagetool-server.jar" org.languagetool.server.HTTPServer --port 8081
+	```
+
+1. Send in another tab of your terminal [the request to the launched local server](https://dev.languagetool.org/http-server#testing-the-server). Query string parameters:
+
+	1. `language` — [the language code](https://github.com/gtarawneh/languagetool-sublime/blob/master/LanguageList.py) of the language of your texts
+	1. `text` — the text for which you get the message that you want to ignore
+
+	For example, if you got the message `Possible spelling mistake found` for the text `Nelia Kerechanyn is a goddess` and the message `Возможно найдена орфографическая ошибка` for the text `Неля Керечанин — богиня`, respectively, you should send requests:
+
+	```bash
+	http :8081/v2/check language==en-US text=="Nelia Kerechanyn is a goddess"
+
+	http :8081/v2/check language==ru text=="Неля Керечанин — богиня"
+	```
+
+	(Examples use [HTTPie](https://httpie.io/) commands.)
+
+1. LanguageTool should return a response to your request in JSON format. Values of the key `matches[].rule.id` of this response are IDs of messages. For requests from the example above, LanguageTool should return IDs `MORFOLOGIK_RULE_EN_US` and `MORFOLOGIK_RULE_RU_RU`.
+1. Open Sublime Text → `Preferences` → `Browse packages…` → `User` → create the file `LanguageToolUser.sublime-settings` → create a JSON object with keys `ignored`, `ignored[].description` and `ignored[].id` → save the file. Keys:
+
+	1. `description` — a description of the ignored message. The value should be a string, the format is arbitrary.
+	1. `id` — the ID you got in step 3.
+
+	The file `LanguageToolUser.sublime-settings` for the example discussed above:
+
+	```json
+	{
+		"ignored":
+		[
+			{
+				"description": "Ignore spell checking for English texts",
+				"id": "MORFOLOGIK_RULE_EN_US"
+			},
+			{
+				"description": "Ignore spell checking for Russian texts",
+				"id": "MORFOLOGIK_RULE_RU_RU"
+			}
+		]
+	}
+	```
+
+After these steps languagetool-sublime shouldn’t return messages `Possible spelling mistake found` and `Возможно найдена орфографическая ошибка` at all.
 
 #### License
 

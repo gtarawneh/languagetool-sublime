@@ -237,8 +237,7 @@ class startLanguageToolServerCommand(sublime_plugin.TextCommand):
 
         java_path = get_settings().get('java_path')
 
-        cmd = [java_path, '-cp', jar_path, 'org.languagetool.server.HTTPServer', '--port', '8081']
-        print(cmd)
+        cmd = [java_path, '--class-path', jar_path, 'org.languagetool.server.HTTPServer', '--port', '8081']
 
         sublime.status_message('Starting local LanguageTool server ...')
 
