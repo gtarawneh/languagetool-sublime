@@ -72,16 +72,40 @@ Server` (this requires the settings entry `languagetool_jar` to point to the
 local languagetool JAR file), or from the command line following the
 instructions in <https://dev.languagetool.org/http-server>.
 
-The settings file contains remote and local server URL entries. A third option
+The settings file contains remote and local server URL entries. The option
 `default_server` indicates which of these is used when the command
-`LanguageTool: Check Text` is ran. As an added convenience, two more commands:
+`LanguageTool: Check Text` is ran. As an added convenience, more commands:
 
 * `LanguageTool: Check Text (Local Server)`
 * `LanguageTool: Check Text (Remote Server)`
+* `LanguageTool: Check Text (Premium Server)`
 
-are provided, which can be used to check text using the local/remote servers
+are provided, which can be used to check text using a particular server
 regardless of `default_server`. This can be used for one-off checks when it's
 desirable to use a particular server with certain pieces of text.
+
+#### LanguageTool Plus (Premium)
+
+If you have a LanguageTool Plus subscription,
+the adapter can use the premium API (which offers additional checks and higher
+quotas), similar to LTeX+ extension for VS Code or the LibreOffice
+integration. To enable it, copy the following entries to your `Settings - User`
+file and fill in your credentials:
+
+```json
+{
+    "username": "you@example.com",
+    "api_key": "your-api-key"
+}
+```
+When both credentials are
+set they are sent with every request (this is required by the premium
+endpoint). Requests are sent to `languagetool_server_premium`
+(`https://api.languagetoolplus.com/v2/check` by default).
+
+To use premium for every check, set `default_server` to `premium`. To use it
+only occasionally, leave `default_server` as-is and run `LanguageTool: Check
+Text (Premium Server)` for individual checks.
 
 #### License
 
