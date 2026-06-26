@@ -354,12 +354,16 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         language = self.view.settings().get('language_tool_language', 'auto')
         ignored_ids = [rule['id'] for rule in load_ignored_rules()]
 
+        username = settings.get('username')
+        api_key = settings.get('api_key')
+
         matches = LTServer.getResponse(server_url, check_text, language,
-                                       ignored_ids)
+                                       ignored_ids, username, api_key)
 
         if matches == None:
             set_status_bar('could not parse server response (may be due to'
-                           ' quota if using https://languagetool.org)')
+                           ' quota if using https://languagetool.org, or to'
+                           ' invalid LanguageTool Plus credentials)')
             return
 
         def get_region(problem):

@@ -1,7 +1,11 @@
 {
     "languagetool_server_remote": "https://api.languagetool.org/v2/check",
     "languagetool_server_local": "http://localhost:8081/v2/check",
+    "languagetool_server_premium": "https://api.languagetoolplus.com/v2/check",
     "default_server": "remote",
+    "username": "",
+    "api_key": "",
+
     "display_mode": "panel",
     "languagetool_jar": "C:\\bin\\LanguageTool-3.5\\languagetool.jar",
     "highlight-scope": "comment",

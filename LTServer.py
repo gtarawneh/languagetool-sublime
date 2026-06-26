@@ -15,13 +15,17 @@ else:
 		from urllib.parse import urlencode
 		from urllib.request import urlopen
 
-def getResponse(server, text, language, disabledRules):
+def getResponse(server, text, language, disabledRules, username=None, apiKey=None):
 	payload = {
 		'language': language,
 		'text': text.encode('utf8'),
 		'User-Agent': 'sublime',
 		'disabledRules' : ','.join(disabledRules)
 	}
+	# Premium (LanguageTool Plus) authentication. Both fields are required and are only sent when configured
+	if username and apiKey:
+		payload['username'] = username
+		payload['apiKey'] = apiKey
 	content = _post(server, payload)
 	if content:
 		j = json.loads(content.decode('utf-8'))

@@ -14,6 +14,11 @@
 		"args": {"force_server": "remote"}
 	},
 	{
+		"caption": "LanguageTool: Check Text (Premium Server)",
+		"command": "language_tool",
+		"args": {"force_server": "premium"}
+	},
+	{
 		"caption": "LanguageTool: Next Problem",
 		"command": "goto_next_language_problem",
 		"args": {"jump_forward": true}
